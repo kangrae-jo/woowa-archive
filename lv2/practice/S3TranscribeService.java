@@ -1,6 +1,5 @@
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -47,22 +46,24 @@ public class S3TranscribeService implements TranscribeService, AutoCloseable {
     }
 
     @Override
-    public String upload(String bucketName, String filePath) throws IOException {
-        File file = new File(filePath);
+    public String upload(String bucketName, String filePath) {
+        Path path = Paths.get(filePath);
+        File file = path.toFile();
+
         if (!file.exists()) {
-            throw new IOException("파일을 찾을 수 없습니다: " + filePath);
+            throw new IllegalArgumentException("파일을 찾을 수 없습니다: " + filePath);
         }
 
         String key = "transcribe/" + file.getName() + "/" + LocalDateTime.now();
         Extension extension = getExtensionType(file.getName());
+
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
                 .contentType(extension.getContentType())
                 .build();
 
-        byte[] fileBytes = Files.readAllBytes(Paths.get(filePath));
-        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(fileBytes));
+        s3Client.putObject(putObjectRequest, RequestBody.fromFile(path));
 
         return key;
     }

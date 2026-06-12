@@ -1,8 +1,6 @@
-import java.io.IOException;
-
 public interface TranscribeService {
 
-    String upload(String bucketName, String filePath) throws IOException;
+    String upload(String bucketName, String filePath);
 
     void startTranscriptionJob(
             String jobName,
