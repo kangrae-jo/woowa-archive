@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['lv2/practice']
+        }
+    }
+}
+
+dependencies {
+    implementation platform('software.amazon.awssdk:bom:2.34.0')
+    implementation 'software.amazon.awssdk:s3'
+    implementation 'software.amazon.awssdk:transcribe'
+    implementation 'software.amazon.awssdk:auth'
+    implementation 'software.amazon.awssdk:regions'
+    implementation 'software.amazon.awssdk:sdk-core'
+
+    implementation platform('org.springframework:spring-framework-bom:6.2.8')
+    implementation 'org.springframework:spring-context'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
