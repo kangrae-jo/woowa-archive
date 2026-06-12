@@ -4,11 +4,8 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.transcribe.TranscribeClient;
@@ -22,26 +19,19 @@ import software.amazon.awssdk.services.transcribe.model.TranscriptionJob;
 import software.amazon.awssdk.services.transcribe.model.TranscriptionJobStatus;
 
 @Service
-public class S3TranscribeService implements TranscribeService, AutoCloseable {
+public class S3TranscribeService implements TranscribeService {
 
-    private final TranscribeClient transcribeClient;
     private final S3Client s3Client;
+    private final TranscribeClient transcribeClient;
     private final TranscriptionResultReader resultReader;
 
     public S3TranscribeService(
-            @Value("${aws.region:ap-northeast-2}") String regionName,
+            S3Client s3Client,
+            TranscribeClient transcribeClient,
             TranscriptionResultReader resultReader
     ) {
-        Region region = Region.of(regionName);
-        DefaultCredentialsProvider credentialsProvider = DefaultCredentialsProvider.builder().build();
-        this.transcribeClient = TranscribeClient.builder()
-                .region(region)
-                .credentialsProvider(credentialsProvider)
-                .build();
-        this.s3Client = S3Client.builder()
-                .region(region)
-                .credentialsProvider(credentialsProvider)
-                .build();
+        this.s3Client = s3Client;
+        this.transcribeClient = transcribeClient;
         this.resultReader = resultReader;
     }
 
@@ -216,12 +206,6 @@ public class S3TranscribeService implements TranscribeService, AutoCloseable {
     @Override
     public String getTranscriptionResult(String jobName) {
         return resultReader.readTranscriptionResult(jobName);
-    }
-
-    @Override
-    public void close() {
-        transcribeClient.close();
-        s3Client.close();
     }
 
     private Extension getExtensionType(String name) {
