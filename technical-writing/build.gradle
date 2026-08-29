@@ -1,0 +1,68 @@
+plugins {
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['02-minimal-db-polling/src/main/java']
+        }
+        resources {
+            srcDirs = ['02-minimal-db-polling/src/main/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = [
+                    '02-minimal-db-polling/src/test/java',
+                    '03-failure-reproduction/src/test/java'
+            ]
+        }
+        resources {
+            srcDirs = [
+                    '02-minimal-db-polling/src/test/resources',
+                    '03-failure-reproduction/src/test/resources'
+            ]
+        }
+    }
+}
+
+dependencies {
+    implementation platform('org.springframework:spring-framework-bom:6.2.8')
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-jdbc'
+
+    runtimeOnly 'com.h2database:h2:2.4.240'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform {
+        excludeTags 'failure-reproduction'
+    }
+}
+
+tasks.register('failureTest', Test) {
+    group = 'verification'
+    description = 'DB Polling의 알려진 실패 시나리오를 재현합니다.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter test
+
+    useJUnitPlatform {
+        includeTags 'failure-reproduction'
+    }
+}

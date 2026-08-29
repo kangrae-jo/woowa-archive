@@ -11,27 +11,7 @@ java {
 sourceSets {
     main {
         java {
-            srcDirs = [
-                    'lv2/practice',
-                    '../technical-writing/02-minimal-db-polling/src/main/java'
-            ]
-        }
-        resources {
-            srcDirs = ['../technical-writing/02-minimal-db-polling/src/main/resources']
-        }
-    }
-    test {
-        java {
-            srcDirs = [
-                    '../technical-writing/02-minimal-db-polling/src/test/java',
-                    '../technical-writing/03-failure-reproduction/src/test/java'
-            ]
-        }
-        resources {
-            srcDirs = [
-                    '../technical-writing/02-minimal-db-polling/src/test/resources',
-                    '../technical-writing/03-failure-reproduction/src/test/resources'
-            ]
+            srcDirs = ['lv2/practice']
         }
     }
 }
@@ -60,19 +40,5 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 test {
-    useJUnitPlatform {
-        excludeTags 'failure-reproduction'
-    }
-}
-
-tasks.register('failureTest', Test) {
-    group = 'verification'
-    description = 'DB Polling의 알려진 실패 시나리오를 재현합니다.'
-    testClassesDirs = sourceSets.test.output.classesDirs
-    classpath = sourceSets.test.runtimeClasspath
-    shouldRunAfter test
-
-    useJUnitPlatform {
-        includeTags 'failure-reproduction'
-    }
+    useJUnitPlatform()
 }
