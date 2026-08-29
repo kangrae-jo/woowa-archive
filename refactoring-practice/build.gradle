@@ -11,7 +11,7 @@ java {
 sourceSets {
     main {
         java {
-            srcDirs = ['lv2/practice']
+            srcDirs = ['lv2/practice', 'src/main/java']
         }
     }
 }
@@ -26,6 +26,9 @@ dependencies {
 
     implementation platform('org.springframework:spring-framework-bom:6.2.8')
     implementation 'org.springframework:spring-context'
+    implementation 'org.springframework:spring-jdbc'
+
+    runtimeOnly 'com.h2database:h2:2.4.240'
 
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
