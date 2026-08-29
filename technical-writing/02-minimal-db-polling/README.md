@@ -1,75 +1,79 @@
-# 2. 최소 DB Polling 구현
+# 02. 최소 DB Polling 구조 재구성
 
-상태: **작성 완료**
+## 결론 🧭
 
-## 결론 🎯
+2025년 당시 안정화 이후 구조와 유사한 DB Polling 흐름을 최소 코드로 재구성했다. 이 코드는 과거 소스의 완전한 복원이 아니라, 현재 신뢰성 문제를 테스트하기 위한 기준 구현이다.
 
-**채택:** Java 21, Spring JDBC, H2로 정상 흐름만 수행하는 최소 DB Polling 구조를 구현했다. 요청 행의 존재를 대기 상태로 사용하고, 워커는 가장 오래된 요청 한 건을 삭제한 뒤 이미지를 생성한다.
+Java 21, Spring JDBC, H2, JUnit 5를 유지했다. JPA와 Spring Boot 전체 환경은 도입하지 않았다.
 
-**보류:** 상태, 원자적 선점, 타임아웃, 재시도, 멱등성은 4단계 범위다. 이번 구현은 안정적인 운영 구조가 아니라 3단계 실패 테스트의 기준선이다.
+## 프로젝트 경계
 
-## 구현 범위
+`technical-writing` 디렉터리에서 Gradle Wrapper를 직접 실행한다. 소스는 02단계 아래에, 실패 재현 테스트는 03단계 아래에 유지한다.
 
-| 구성 요소 | 책임 | 구현 |
-| --- | --- | --- |
-| `monster` | 사용자 요청과 최종 이미지 저장 | `id`, `prompt`, `image` |
-| `image_generation_request` | 처리 대기 요청 저장 | `id`, `prompt`, `created_at` |
-| `ImageGenerationService` | 두 테이블에 요청 등록 | `monster` 저장 후 요청 enqueue |
-| `DbPollingScheduler` | 고정 간격으로 워커 실행 | 단일 스레드 `scheduleWithFixedDelay` |
-| `DbPollingWorker` | 요청 조회·삭제·생성·결과 저장 | 한 번에 최대 1건 처리 |
-
-구현 코드는 [`src/main/java/com/kng0501/dbpolling`](./src/main/java/com/kng0501/dbpolling)에 위치한다. 스키마는 [`schema.sql`](./src/main/resources/db/schema.sql)에 위치한다.
-
-## 정상 처리 흐름 🔄
-
-```mermaid
-flowchart LR
-    A[사용자 prompt] --> B[ImageGenerationService]
-    B --> C[(monster INSERT)]
-    B --> D[(request INSERT)]
-    E[DbPollingScheduler] -->|고정 간격 실행| F[DbPollingWorker]
-    F -->|가장 오래된 1건 SELECT| D
-    F -->|처리 전 DELETE| D
-    F --> G[ImageGenerator]
-    G -->|생성 이미지| F
-    F -->|request.id로 UPDATE| C
+```text
+technical-writing/
+├── build.gradle
+├── settings.gradle
+├── gradlew
+├── 02-minimal-db-polling/src/main
+├── 02-minimal-db-polling/src/test
+└── 03-failure-reproduction/src/test
 ```
 
-1. 서비스가 `monster` 행을 먼저 만들고 이미지 생성 요청을 enqueue한다.
-2. 스케줄러가 설정된 간격마다 `pollOnce()`를 호출한다.
-3. 워커가 가장 오래된 요청 한 건을 조회하고 즉시 삭제한다.
-4. 워커가 프롬프트로 이미지를 생성한다.
-5. `request.id`와 같은 ID의 `monster.image`를 갱신한다.
+`refactoring-practice`의 외부 `sourceSets` 연결은 사용하지 않는다.
 
-📌 요청이 없으면 `pollOnce()`는 `false`를 반환한다. 요청이 있으면 한 건만 처리하고 `true`를 반환한다.
+## 최소 처리 흐름 🔄
 
-## 최소 구현에서 의도적으로 남긴 제약 ⚠️
+```mermaid
+sequenceDiagram
+    participant C as 요청자
+    participant S as ImageGenerationService
+    participant M as monster
+    participant J as image_generation_request
+    participant W as DbPollingWorker
+    participant G as ImageGenerator
 
-| 지점 | 현재 동작 | 다음 검증 대상 |
+    C->>S: request(prompt)
+    S->>M: Monster 저장
+    S->>J: Job 등록
+    W->>J: 가장 오래된 Job 조회
+    W->>J: Job 삭제
+    W->>G: 이미지 생성
+    G-->>W: image
+    W->>M: Job ID로 이미지 갱신
+```
+
+## 구성 요소
+
+| 구성 요소 | 현재 역할 | 근거 파일 |
 | --- | --- | --- |
-| 작업 상태 | 요청 행의 존재만으로 대기를 표현 | 실행 중·성공·실패를 구분할 수 있는가 |
-| 작업 선점 | `SELECT`와 `DELETE`가 분리됨 | 두 워커가 같은 행을 읽을 수 있는가 |
-| 워커 종료 | 생성 전에 요청 행을 삭제함 | 삭제 직후 종료되면 작업이 유실되는가 |
-| 결과 연결 | `request.id == monster.id`를 전제함 | 두 시퀀스가 어긋나면 다른 결과에 연결되는가 |
-| 요청 등록 | 두 INSERT가 하나의 트랜잭션이 아님 | 두 번째 INSERT 실패 시 불완전 데이터가 남는가 |
-| 오류 처리 | 스케줄러 실행 중 예외를 복구하지 않음 | 예외 뒤 polling이 중단되는가 |
+| `ImageGenerationService` | Monster 저장 후 Job 등록 | [`ImageGenerationService.java`](./src/main/java/com/kng0501/dbpolling/application/ImageGenerationService.java) |
+| `DbPollingScheduler` | `scheduleWithFixedDelay`로 Worker 반복 호출 | [`DbPollingScheduler.java`](./src/main/java/com/kng0501/dbpolling/application/DbPollingScheduler.java) |
+| `DbPollingWorker` | 조회 → 삭제 → 생성 → 결과 반영 | [`DbPollingWorker.java`](./src/main/java/com/kng0501/dbpolling/application/DbPollingWorker.java) |
+| JDBC 저장소 | Monster와 Job을 H2에 저장·조회 | [`persistence`](./src/main/java/com/kng0501/dbpolling/persistence) |
+| 스키마 | `monster`, `image_generation_request` 두 테이블 정의 | [`schema.sql`](./src/main/resources/db/schema.sql) |
 
-ID 일치 전제와 삭제 후 처리는 운영 환경에서 **거부**할 설계다. 이번 단계에서는 실패를 결정적으로 재현하기 위해 그대로 유지했다.
+`image_generation_request`에는 `prompt`와 생성 시각만 있다. 작업 상태와 `monster_id` 연결 키는 없다.
 
-## 제외한 선택
+## 정상 동작 기준 ✅
 
-- 외부 메시지 큐: **거부.** 현재 실습의 DB Polling 제약을 벗어난다.
-- Spring Boot·JPA: **거부.** 스키마와 SQL 동작을 직접 확인하기 어려워지고 최소 구현 범위를 키운다.
-- 분산 잠금·상태 머신·재시도 라이브러리: **보류.** 실패 재현 전에 넣으면 3단계 검증 대상을 가린다.
+정상 테스트는 저장소와 단일 Worker·Scheduler의 기본 흐름만 확인한다.
 
-## 검증 결과 ✅
+```bash
+cd technical-writing
+./gradlew test
+```
 
-`./gradlew test` 실행 결과 `BUILD SUCCESSFUL`.
+`failure-reproduction` 태그는 제외된다. 현재 정상 테스트는 총 5개다.
 
-| 테스트 | 개수 | 결과 |
-| --- | ---: | --- |
-| JDBC 저장·조회·삭제 | 2 | 통과 |
-| 워커 정상 처리·빈 큐·주기 Polling | 3 | 통과 |
-| 합계 | 5 | 실패 0 |
+## 의도적으로 남긴 신뢰성 공백 ⚠️
 
-전체 부하와 장애 상황은 아직 측정하지 않았다. 3단계에서는 프로덕션 코드를 먼저 고치지 않고 중복 선점, 워커 종료, 결과 오연결을 실패 테스트로 고정한다.
+| 공백 | 현재 코드의 근거 | 03단계에서 검증할 불변식 |
+| --- | --- | --- |
+| 원자적 선점 없음 | 조회와 삭제가 분리됨 | 한 작업은 한 Worker만 처리해야 함 |
+| 처리 전 삭제 | 생성 전에 Job 행을 삭제함 | Worker 종료 후 미완료 작업이 남아야 함 |
+| 명시적 결과 연결 없음 | Job ID를 Monster ID로 사용함 | 결과는 요청한 Monster에만 연결돼야 함 |
+| 등록 트랜잭션 없음 | Monster 저장과 Job 등록이 별도 호출임 | 둘은 함께 저장되거나 함께 취소돼야 함 |
+| 예외 격리 없음 | Scheduler에 `worker::pollOnce`를 직접 전달함 | 한 작업 실패가 이후 Polling을 중단하면 안 됨 |
+
+이 공백은 현재 단계에서 해결하지 않는다. [03단계](../03-failure-reproduction/README.md)는 **과거 코드와 유사한 재구성에서 확인한 잠재적 신뢰성 문제**를 RED 테스트로 고정한다. 작업 상태, 원자적 선점, 처리 타임아웃 복구, 재시도, 멱등한 결과 반영은 4단계 범위다.
