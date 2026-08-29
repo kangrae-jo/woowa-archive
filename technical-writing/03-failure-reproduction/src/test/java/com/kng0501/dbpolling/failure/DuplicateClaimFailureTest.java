@@ -78,6 +78,9 @@ class DuplicateClaimFailureTest {
             );
         } finally {
             executor.shutdownNow();
+            if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                throw new AssertionError("테스트 Executor가 제한 시간 안에 종료되지 않았습니다.");
+            }
         }
     }
 
