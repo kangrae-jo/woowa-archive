@@ -11,7 +11,21 @@ java {
 sourceSets {
     main {
         java {
-            srcDirs = ['lv2/practice', 'src/main/java']
+            srcDirs = [
+                    'lv2/practice',
+                    '../technical-writing/02-minimal-db-polling/src/main/java'
+            ]
+        }
+        resources {
+            srcDirs = ['../technical-writing/02-minimal-db-polling/src/main/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['../technical-writing/02-minimal-db-polling/src/test/java']
+        }
+        resources {
+            srcDirs = ['../technical-writing/02-minimal-db-polling/src/test/resources']
         }
     }
 }

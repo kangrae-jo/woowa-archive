@@ -18,7 +18,7 @@
 | `DbPollingScheduler` | 고정 간격으로 워커 실행 | 단일 스레드 `scheduleWithFixedDelay` |
 | `DbPollingWorker` | 요청 조회·삭제·생성·결과 저장 | 한 번에 최대 1건 처리 |
 
-구현 코드는 [`refactoring-practice/src/main/java/com/kng0501/dbpolling`](../../refactoring-practice/src/main/java/com/kng0501/dbpolling)에 위치한다. 스키마는 [`schema.sql`](../../refactoring-practice/src/main/resources/db/schema.sql)에 위치한다.
+구현 코드는 [`src/main/java/com/kng0501/dbpolling`](./src/main/java/com/kng0501/dbpolling)에 위치한다. 스키마는 [`schema.sql`](./src/main/resources/db/schema.sql)에 위치한다.
 
 ## 정상 처리 흐름 🔄
 
