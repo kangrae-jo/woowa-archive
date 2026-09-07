@@ -11,23 +11,31 @@ java {
 sourceSets {
     main {
         java {
-            srcDirs = ['02-minimal-db-polling/src/main/java']
+            srcDirs = [
+                    '02-minimal-db-polling/src/main/java',
+                    '04-reliability-hardening/src/main/java'
+            ]
         }
         resources {
-            srcDirs = ['02-minimal-db-polling/src/main/resources']
+            srcDirs = [
+                    '02-minimal-db-polling/src/main/resources',
+                    '04-reliability-hardening/src/main/resources'
+            ]
         }
     }
     test {
         java {
             srcDirs = [
                     '02-minimal-db-polling/src/test/java',
-                    '03-failure-reproduction/src/test/java'
+                    '03-failure-reproduction/src/test/java',
+                    '04-reliability-hardening/src/test/java'
             ]
         }
         resources {
             srcDirs = [
                     '02-minimal-db-polling/src/test/resources',
-                    '03-failure-reproduction/src/test/resources'
+                    '03-failure-reproduction/src/test/resources',
+                    '04-reliability-hardening/src/test/resources'
             ]
         }
     }
