@@ -25,7 +25,7 @@
 | [01](./01-past-structure-and-limitations/README.md) | 과거 구조와 기록의 한계 | 완료 |
 | [02](./02-minimal-db-polling/README.md) | 최소 DB Polling 재구성 | 완료 |
 | [03](./03-failure-reproduction/README.md) | 잠재적 신뢰성 문제 5개 재현 | 완료 |
-| [04](./04-reliability-hardening/README.md) | 상태·선점·타임아웃·재시도·멱등성 | 보류 |
+| [04](./04-reliability-hardening/README.md) | DB Job Queue 신뢰성 개선과 기본 검증 | 완료 |
 | [05](./05-regression-verification/README.md) | 동일 실패 테스트 회귀 검증 | 보류 |
 | [06](./06-final-300-job-measurement/README.md) | 현재 구현에 300개 작업 입력 후 측정 | 보류 |
 
@@ -35,13 +35,15 @@
 
 ```bash
 cd technical-writing
-./gradlew test
-./gradlew failureTest
+./gradlew test --rerun-tasks
+./gradlew failureTest --rerun-tasks
 ```
 
-- `test`: `failure-reproduction` 태그를 제외한 정상 테스트 5개 실행.
-- `failureTest`: `failure-reproduction` 태그가 붙은 RED 테스트 5개만 실행. 현재 단계의 기대 종료 코드는 `1`이다.
+- `test`: 기존 정상 테스트 5개와 04단계 기본 테스트 23개 실행. 총 28개 성공.
+- `failureTest`: 02단계 기준 구현을 대상으로 03단계 RED 테스트 5개만 실행. 의도한 assertion에서 5개 실패하며 기대 종료 코드는 `1`이다.
+
+02·03단계 소스와 실패 재현 의미를 보존한다. 04단계는 별도 `com.kng0501.dbqueue` 패키지와 스키마를 사용한다. 01~03 문서는 각 단계의 기록이며, 전체 빌드의 현재 테스트 구성은 위 명령을 기준으로 한다.
 
 ## 현재 범위
 
-1~3단계만 완료했다. 작업 상태와 원자적 선점 등 실제 해결 코드는 4단계 이후 범위다. 300개 작업 측정은 6단계 범위다.
+1~4단계 구현과 기본 검증을 완료했다. 03단계 RED 테스트를 새 구현에 이식하는 전체 회귀 검증은 05단계에 보류한다. 현재 구현에 300개 작업을 입력하는 측정은 06단계에 보류한다.
