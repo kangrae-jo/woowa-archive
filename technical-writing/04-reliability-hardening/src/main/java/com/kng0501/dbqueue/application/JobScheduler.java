@@ -12,12 +12,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public final class JobScheduler implements AutoCloseable {
-    private static final Logger LOG = LoggerFactory.getLogger(JobScheduler.class);
-
     private final JobQueue queue;
     private final JobWorker worker;
     private final QueueSettings settings;
@@ -103,7 +101,7 @@ public final class JobScheduler implements AutoCloseable {
         try {
             action.run();
         } catch (final RuntimeException failure) {
-            LOG.error("operation={} job_id=unassigned attempt_count=unknown cause={}",
+            log.error("operation={} job_id=unassigned attempt_count=unknown cause={}",
                     operation, failure.toString(), failure);
         }
     }
@@ -131,11 +129,11 @@ public final class JobScheduler implements AutoCloseable {
     private static void awaitTermination(final ExecutorService executor) {
         try {
             if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                LOG.warn("Executor가 종료되지 않았습니다. Generator의 interrupt 협조가 필요합니다.");
+                log.warn("Executor가 종료되지 않았습니다. Generator의 interrupt 협조가 필요합니다.");
             }
         } catch (final InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            LOG.warn("Executor 종료 대기가 중단됐습니다.", interrupted);
+            log.warn("Executor 종료 대기가 중단됐습니다.", interrupted);
         }
     }
 

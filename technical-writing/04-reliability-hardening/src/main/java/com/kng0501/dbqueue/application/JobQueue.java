@@ -11,15 +11,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.sql.DataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.JdbcTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+@Slf4j
 public final class JobQueue {
-    private static final Logger LOG = LoggerFactory.getLogger(JobQueue.class);
     private static final int RECOVERY_BATCH_SIZE = 100;
 
     private final Clock clock;
@@ -99,11 +98,11 @@ public final class JobQueue {
                 }));
                 if (changed) {
                     recovered++;
-                    LOG.warn("job_id={} attempt_count={} cause=processing deadline expired",
+                    log.warn("job_id={} attempt_count={} cause=processing deadline expired",
                             expired.jobId(), expired.attemptCount());
                 }
             } catch (final RuntimeException failure) {
-                LOG.error("job_id={} attempt_count={} cause=timeout recovery persistence failed",
+                log.error("job_id={} attempt_count={} cause=timeout recovery persistence failed",
                         expired.jobId(), expired.attemptCount(), failure);
             }
         }
