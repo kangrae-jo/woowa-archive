@@ -44,44 +44,80 @@ public final class JdbcJobRepository {
                 SELECT job_id FROM image_generation_job
                 WHERE status = 'PENDING' AND next_attempt_at <= ? AND attempt_count < ?
                 ORDER BY next_attempt_at, job_id LIMIT 1
-                """, (rs, row) -> rs.getLong("job_id"), timestamp(now), maxAttempts).stream().findFirst();
+                """, (rs, row) -> rs.getLong("job_id"), timestamp(now), maxAttempts
+        ).stream().findFirst();
     }
 
-    public boolean claim(final long jobId, final UUID token, final Instant now, final Instant deadline, final int maxAttempts) {
+    public boolean claim(
+            final long jobId,
+            final UUID token,
+            final Instant now,
+            final Instant deadline,
+            final int maxAttempts
+    ) {
         return jdbc.update("""
                 UPDATE image_generation_job
                 SET status = 'RUNNING', claim_token = ?, deadline_at = ?,
                     attempt_count = attempt_count + 1, started_at = ?, finished_at = NULL
                 WHERE job_id = ? AND status = 'PENDING' AND next_attempt_at <= ? AND attempt_count < ?
-                """, token, timestamp(deadline), timestamp(now), jobId, timestamp(now), maxAttempts) == 1;
+                """, token, timestamp(deadline), timestamp(now), jobId, timestamp(now), maxAttempts
+        ) == 1;
     }
 
-    public boolean markSucceeded(final long jobId, final UUID token, final Instant now) {
+    public boolean markSucceeded(
+            final long jobId,
+            final UUID token,
+            final Instant now
+    ) {
         return jdbc.update("""
                 UPDATE image_generation_job
                 SET status = 'SUCCEEDED', finished_at = ?, claim_token = NULL, deadline_at = NULL
                 WHERE job_id = ? AND status = 'RUNNING' AND claim_token = ? AND deadline_at > ?
-                """, timestamp(now), jobId, token, timestamp(now)) == 1;
+                """, timestamp(now), jobId, token, timestamp(now)
+        ) == 1;
     }
 
-    public boolean fail(final Job claim, final Instant now, final Instant nextAttemptAt, final int maxAttempts, final String reason) {
+    public boolean fail(
+            final Job claim,
+            final Instant now,
+            final Instant nextAttemptAt,
+            final int maxAttempts,
+            final String reason
+    ) {
         return transitionFailure(claim, now, nextAttemptAt, maxAttempts, reason, "deadline_at > ?");
     }
 
-    public boolean expire(final Job claim, final Instant now, final Instant nextAttemptAt, final int maxAttempts) {
-        return transitionFailure(claim, now, nextAttemptAt, maxAttempts, "processing deadline expired", "deadline_at <= ?");
+    public boolean expire(
+            final Job claim,
+            final Instant now,
+            final Instant nextAttemptAt,
+            final int maxAttempts
+    ) {
+        return transitionFailure(
+                claim,
+                now,
+                nextAttemptAt,
+                maxAttempts,
+                "processing deadline expired",
+                "deadline_at <= ?"
+        );
     }
 
     private boolean transitionFailure(
-            final Job claim, final Instant now, final Instant nextAttemptAt, final int maxAttempts, final String reason, final String deadlineCondition
+            final Job claim,
+            final Instant now,
+            final Instant nextAttemptAt,
+            final int maxAttempts,
+            final String reason,
+            final String deadlineCondition
     ) {
         return jdbc.update("""
-                UPDATE image_generation_job
-                SET status = CASE WHEN attempt_count >= ? THEN 'FAILED' ELSE 'PENDING' END,
-                    next_attempt_at = CASE WHEN attempt_count >= ? THEN next_attempt_at ELSE ? END,
-                    finished_at = CASE WHEN attempt_count >= ? THEN ? ELSE NULL END,
-                    claim_token = NULL, deadline_at = NULL, last_error = ?
-                WHERE job_id = ? AND status = 'RUNNING' AND claim_token = ? AND """ + " " + deadlineCondition,
+                        UPDATE image_generation_job
+                        SET status = CASE WHEN attempt_count >= ? THEN 'FAILED' ELSE 'PENDING' END,
+                            next_attempt_at = CASE WHEN attempt_count >= ? THEN next_attempt_at ELSE ? END,
+                            finished_at = CASE WHEN attempt_count >= ? THEN ? ELSE NULL END,
+                            claim_token = NULL, deadline_at = NULL, last_error = ?
+                        WHERE job_id = ? AND status = 'RUNNING' AND claim_token = ? AND """ + " " + deadlineCondition,
                 maxAttempts, maxAttempts, timestamp(nextAttemptAt), maxAttempts, timestamp(now),
                 reason, claim.jobId(), claim.claimToken(), timestamp(now)
         ) == 1;

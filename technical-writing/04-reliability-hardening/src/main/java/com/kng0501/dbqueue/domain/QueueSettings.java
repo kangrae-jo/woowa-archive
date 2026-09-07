@@ -23,8 +23,12 @@ public record QueueSettings(
 
     public static QueueSettings experimentalDefaults() {
         return new QueueSettings(
-                Duration.ofSeconds(30), 3, Duration.ofSeconds(1), 2,
-                Duration.ofMillis(100), Duration.ofMillis(100)
+                Duration.ofSeconds(30),
+                3,
+                Duration.ofSeconds(1),
+                2,
+                Duration.ofMillis(100),
+                Duration.ofMillis(100)
         );
     }
 
