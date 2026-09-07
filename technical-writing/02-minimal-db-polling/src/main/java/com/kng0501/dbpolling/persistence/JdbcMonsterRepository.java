@@ -16,17 +16,17 @@ public final class JdbcMonsterRepository implements MonsterRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public JdbcMonsterRepository(DataSource dataSource) {
+    public JdbcMonsterRepository(final DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     @Override
-    public long save(String prompt) {
+    public long save(final String prompt) {
         validateText(prompt, "prompt");
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        int updatedRows = jdbcTemplate.update(connection -> {
-            var statement = connection.prepareStatement(INSERT_SQL, new String[]{"id"});
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+        final int updatedRows = jdbcTemplate.update(connection -> {
+            final var statement = connection.prepareStatement(INSERT_SQL, new String[]{"id"});
             statement.setString(1, prompt);
             return statement;
         }, keyHolder);
@@ -38,8 +38,8 @@ public final class JdbcMonsterRepository implements MonsterRepository {
     }
 
     @Override
-    public Optional<Monster> findById(long id) {
-        List<Monster> monsters = jdbcTemplate.query(
+    public Optional<Monster> findById(final long id) {
+        final List<Monster> monsters = jdbcTemplate.query(
                 FIND_BY_ID_SQL,
                 (resultSet, rowNumber) -> new Monster(
                         resultSet.getLong("id"),
@@ -52,12 +52,12 @@ public final class JdbcMonsterRepository implements MonsterRepository {
     }
 
     @Override
-    public void updateImage(long monsterId, String image) {
+    public void updateImage(final long monsterId, final String image) {
         validateText(image, "image");
         jdbcTemplate.update(UPDATE_IMAGE_SQL, image, monsterId);
     }
 
-    private static void validateText(String value, String fieldName) {
+    private static void validateText(final String value, final String fieldName) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(fieldName + "는 비어 있을 수 없습니다.");
         }

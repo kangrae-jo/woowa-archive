@@ -16,14 +16,14 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 public final class JdbcJobRepository {
     private final JdbcTemplate jdbc;
 
-    public JdbcJobRepository(JdbcTemplate jdbc) {
+    public JdbcJobRepository(final JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
-    public long enqueue(long monsterId, String prompt, Instant now) {
-        var key = new GeneratedKeyHolder();
-        int count = jdbc.update(connection -> {
-            var statement = connection.prepareStatement("""
+    public long enqueue(final long monsterId, final String prompt, final Instant now) {
+        final var key = new GeneratedKeyHolder();
+        final int count = jdbc.update(connection -> {
+            final var statement = connection.prepareStatement("""
                     INSERT INTO image_generation_job(monster_id, prompt, status, next_attempt_at, created_at)
                     VALUES (?, ?, 'PENDING', ?, ?)
                     """, new String[]{"job_id"});
@@ -39,7 +39,7 @@ public final class JdbcJobRepository {
         return key.getKey().longValue();
     }
 
-    public Optional<Long> findCandidate(Instant now, int maxAttempts) {
+    public Optional<Long> findCandidate(final Instant now, final int maxAttempts) {
         return jdbc.query("""
                 SELECT job_id FROM image_generation_job
                 WHERE status = 'PENDING' AND next_attempt_at <= ? AND attempt_count < ?
@@ -47,7 +47,7 @@ public final class JdbcJobRepository {
                 """, (rs, row) -> rs.getLong("job_id"), timestamp(now), maxAttempts).stream().findFirst();
     }
 
-    public boolean claim(long jobId, UUID token, Instant now, Instant deadline, int maxAttempts) {
+    public boolean claim(final long jobId, final UUID token, final Instant now, final Instant deadline, final int maxAttempts) {
         return jdbc.update("""
                 UPDATE image_generation_job
                 SET status = 'RUNNING', claim_token = ?, deadline_at = ?,
@@ -56,7 +56,7 @@ public final class JdbcJobRepository {
                 """, token, timestamp(deadline), timestamp(now), jobId, timestamp(now), maxAttempts) == 1;
     }
 
-    public boolean markSucceeded(long jobId, UUID token, Instant now) {
+    public boolean markSucceeded(final long jobId, final UUID token, final Instant now) {
         return jdbc.update("""
                 UPDATE image_generation_job
                 SET status = 'SUCCEEDED', finished_at = ?, claim_token = NULL, deadline_at = NULL
@@ -64,16 +64,16 @@ public final class JdbcJobRepository {
                 """, timestamp(now), jobId, token, timestamp(now)) == 1;
     }
 
-    public boolean fail(Job claim, Instant now, Instant nextAttemptAt, int maxAttempts, String reason) {
+    public boolean fail(final Job claim, final Instant now, final Instant nextAttemptAt, final int maxAttempts, final String reason) {
         return transitionFailure(claim, now, nextAttemptAt, maxAttempts, reason, "deadline_at > ?");
     }
 
-    public boolean expire(Job claim, Instant now, Instant nextAttemptAt, int maxAttempts) {
+    public boolean expire(final Job claim, final Instant now, final Instant nextAttemptAt, final int maxAttempts) {
         return transitionFailure(claim, now, nextAttemptAt, maxAttempts, "processing deadline expired", "deadline_at <= ?");
     }
 
     private boolean transitionFailure(
-            Job claim, Instant now, Instant nextAttemptAt, int maxAttempts, String reason, String deadlineCondition
+            final Job claim, final Instant now, final Instant nextAttemptAt, final int maxAttempts, final String reason, final String deadlineCondition
     ) {
         return jdbc.update("""
                 UPDATE image_generation_job
@@ -87,7 +87,7 @@ public final class JdbcJobRepository {
         ) == 1;
     }
 
-    public List<Job> findExpired(Instant now, int limit) {
+    public List<Job> findExpired(final Instant now, final int limit) {
         return jdbc.query("""
                 SELECT * FROM image_generation_job
                 WHERE status = 'RUNNING' AND deadline_at <= ?
@@ -95,13 +95,13 @@ public final class JdbcJobRepository {
                 """, this::map, timestamp(now), limit);
     }
 
-    public Optional<Job> findById(long jobId) {
+    public Optional<Job> findById(final long jobId) {
         return jdbc.query(
                 "SELECT * FROM image_generation_job WHERE job_id = ?", this::map, jobId
         ).stream().findFirst();
     }
 
-    private Job map(ResultSet rs, int row) throws SQLException {
+    private Job map(final ResultSet rs, final int row) throws SQLException {
         return new Job(
                 rs.getLong("job_id"), rs.getLong("monster_id"), rs.getString("prompt"),
                 JobStatus.valueOf(rs.getString("status")), rs.getInt("attempt_count"),
@@ -111,12 +111,12 @@ public final class JdbcJobRepository {
         );
     }
 
-    private static OffsetDateTime timestamp(Instant instant) {
+    private static OffsetDateTime timestamp(final Instant instant) {
         return instant.atOffset(ZoneOffset.UTC);
     }
 
-    private static Instant instant(ResultSet rs, String column) throws SQLException {
-        OffsetDateTime value = rs.getObject(column, OffsetDateTime.class);
+    private static Instant instant(final ResultSet rs, final String column) throws SQLException {
+        final OffsetDateTime value = rs.getObject(column, OffsetDateTime.class);
         return value == null ? null : value.toInstant();
     }
 }

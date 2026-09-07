@@ -8,12 +8,12 @@ public final class DatabaseInitializer {
 
     private final DataSource dataSource;
 
-    public DatabaseInitializer(DataSource dataSource) {
+    public DatabaseInitializer(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
     public void initialize() {
-        var populator = new ResourceDatabasePopulator(new ClassPathResource("db/schema.sql"));
+        final var populator = new ResourceDatabasePopulator(new ClassPathResource("db/schema.sql"));
         populator.execute(dataSource);
     }
 }

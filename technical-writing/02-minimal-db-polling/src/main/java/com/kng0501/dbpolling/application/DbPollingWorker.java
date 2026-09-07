@@ -13,9 +13,9 @@ public final class DbPollingWorker {
     private final ImageGenerator imageGenerator;
 
     public DbPollingWorker(
-            ImageGenerationRequestRepository requestRepository,
-            MonsterRepository monsterRepository,
-            ImageGenerator imageGenerator
+            final ImageGenerationRequestRepository requestRepository,
+            final MonsterRepository monsterRepository,
+            final ImageGenerator imageGenerator
     ) {
         this.requestRepository = requestRepository;
         this.monsterRepository = monsterRepository;
@@ -23,15 +23,15 @@ public final class DbPollingWorker {
     }
 
     public boolean pollOnce() {
-        Optional<ImageGenerationRequest> request = requestRepository.findOldest();
+        final Optional<ImageGenerationRequest> request = requestRepository.findOldest();
         if (request.isEmpty()) {
             return false;
         }
 
-        ImageGenerationRequest target = request.get();
+        final ImageGenerationRequest target = request.get();
         requestRepository.deleteById(target.id());
 
-        String image = imageGenerator.generate(target.prompt());
+        final String image = imageGenerator.generate(target.prompt());
         monsterRepository.updateImage(target.id(), image);
         return true;
     }

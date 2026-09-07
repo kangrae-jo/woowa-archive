@@ -10,38 +10,38 @@ import com.kng0501.dbpolling.support.TestDatabase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class JdbcRepositoryTest {
+final class JdbcRepositoryTest {
 
     private MonsterRepository monsterRepository;
     private ImageGenerationRequestRepository requestRepository;
 
     @BeforeEach
     void setUp() {
-        var dataSource = TestDatabase.createInitializedDataSource();
+        final var dataSource = TestDatabase.createInitializedDataSource();
         monsterRepository = new JdbcMonsterRepository(dataSource);
         requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
     }
 
     @Test
     void monster에_생성_결과를_저장한다() {
-        long monsterId = monsterRepository.save("blue dragon");
+        final long monsterId = monsterRepository.save("blue dragon");
 
-        Monster saved = monsterRepository.findById(monsterId).orElseThrow();
+        final Monster saved = monsterRepository.findById(monsterId).orElseThrow();
         assertFalse(saved.hasImage());
 
         monsterRepository.updateImage(monsterId, "image:blue dragon");
 
-        Monster updated = monsterRepository.findById(monsterId).orElseThrow();
+        final Monster updated = monsterRepository.findById(monsterId).orElseThrow();
         assertTrue(updated.hasImage());
         assertEquals("image:blue dragon", updated.image());
     }
 
     @Test
     void 가장_오래된_요청부터_조회하고_삭제한다() {
-        long firstId = requestRepository.enqueue("first");
+        final long firstId = requestRepository.enqueue("first");
         requestRepository.enqueue("second");
 
-        ImageGenerationRequest oldest = requestRepository.findOldest().orElseThrow();
+        final ImageGenerationRequest oldest = requestRepository.findOldest().orElseThrow();
         assertEquals(firstId, oldest.id());
         assertEquals("first", oldest.prompt());
 

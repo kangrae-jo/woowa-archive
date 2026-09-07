@@ -7,7 +7,7 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 public final class QueueDatabaseInitializer {
     private final DataSource dataSource;
 
-    public QueueDatabaseInitializer(DataSource dataSource) {
+    public QueueDatabaseInitializer(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
 

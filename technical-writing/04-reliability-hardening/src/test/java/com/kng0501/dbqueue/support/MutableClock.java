@@ -15,12 +15,12 @@ public final class MutableClock extends Clock {
         this(new AtomicReference<>(Instant.parse("2026-09-06T00:00:00Z")), ZoneOffset.UTC);
     }
 
-    private MutableClock(AtomicReference<Instant> time, ZoneId zone) {
+    private MutableClock(final AtomicReference<Instant> time, final ZoneId zone) {
         this.time = time;
         this.zone = zone;
     }
 
-    public void advance(Duration duration) {
+    public void advance(final Duration duration) {
         time.updateAndGet(now -> now.plus(duration));
     }
 
@@ -30,7 +30,7 @@ public final class MutableClock extends Clock {
     }
 
     @Override
-    public Clock withZone(ZoneId zone) {
+    public Clock withZone(final ZoneId zone) {
         return new MutableClock(time, zone);
     }
 

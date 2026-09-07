@@ -13,8 +13,8 @@ public final class DbPollingScheduler implements AutoCloseable {
     private final ScheduledExecutorService executor;
     private final AtomicBoolean started = new AtomicBoolean();
 
-    public DbPollingScheduler(DbPollingWorker worker, Duration pollingInterval) {
-        long intervalMillis = pollingInterval.toMillis();
+    public DbPollingScheduler(final DbPollingWorker worker, final Duration pollingInterval) {
+        final long intervalMillis = pollingInterval.toMillis();
         if (intervalMillis <= 0) {
             throw new IllegalArgumentException("polling interval은 1ms 이상이어야 합니다.");
         }

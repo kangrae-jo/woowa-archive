@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("failure-reproduction")
-class WorkerTerminationFailureTest {
+final class WorkerTerminationFailureTest {
 
     private MonsterRepository monsterRepository;
     private ImageGenerationRequestRepository requestRepository;
@@ -23,7 +23,7 @@ class WorkerTerminationFailureTest {
 
     @BeforeEach
     void setUp() {
-        var dataSource = TestDatabase.createInitializedDataSource();
+        final var dataSource = TestDatabase.createInitializedDataSource();
         monsterRepository = new JdbcMonsterRepository(dataSource);
         requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
         imageGenerationService = new ImageGenerationService(monsterRepository, requestRepository);
@@ -32,7 +32,7 @@ class WorkerTerminationFailureTest {
     @Test
     void 워커가_종료되어도_처리중인_작업은_유실되지_않는다() {
         imageGenerationService.request("blue dragon");
-        var stoppedWorker = new DbPollingWorker(
+        final var stoppedWorker = new DbPollingWorker(
                 requestRepository,
                 monsterRepository,
                 prompt -> {

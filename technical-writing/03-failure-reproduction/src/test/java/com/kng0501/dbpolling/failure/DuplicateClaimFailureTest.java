@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("failure-reproduction")
-class DuplicateClaimFailureTest {
+final class DuplicateClaimFailureTest {
 
     private MonsterRepository monsterRepository;
     private ImageGenerationRequestRepository requestRepository;
@@ -34,7 +34,7 @@ class DuplicateClaimFailureTest {
 
     @BeforeEach
     void setUp() {
-        var dataSource = TestDatabase.createInitializedDataSource();
+        final var dataSource = TestDatabase.createInitializedDataSource();
         monsterRepository = new JdbcMonsterRepository(dataSource);
         requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
         imageGenerationService = new ImageGenerationService(monsterRepository, requestRepository);
@@ -43,24 +43,24 @@ class DuplicateClaimFailureTest {
     @Test
     void 두_워커는_같은_작업을_한_번만_처리한다() throws Exception {
         imageGenerationService.request("blue dragon");
-        var synchronizedRepository = new BarrierRequestRepository(
+        final var synchronizedRepository = new BarrierRequestRepository(
                 requestRepository,
                 new CyclicBarrier(2)
         );
-        var generationCount = new AtomicInteger();
-        ImageGenerator generator = prompt -> {
+        final var generationCount = new AtomicInteger();
+        final ImageGenerator generator = prompt -> {
             generationCount.incrementAndGet();
             return "image:" + prompt;
         };
-        var firstWorker = new DbPollingWorker(synchronizedRepository, monsterRepository, generator);
-        var secondWorker = new DbPollingWorker(synchronizedRepository, monsterRepository, generator);
+        final var firstWorker = new DbPollingWorker(synchronizedRepository, monsterRepository, generator);
+        final var secondWorker = new DbPollingWorker(synchronizedRepository, monsterRepository, generator);
 
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        final ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
-            Future<Boolean> firstResult = executor.submit(firstWorker::pollOnce);
-            Future<Boolean> secondResult = executor.submit(secondWorker::pollOnce);
+            final Future<Boolean> firstResult = executor.submit(firstWorker::pollOnce);
+            final Future<Boolean> secondResult = executor.submit(secondWorker::pollOnce);
 
-            int processedWorkerCount = countProcessedWorkers(
+            final int processedWorkerCount = countProcessedWorkers(
                     firstResult.get(2, TimeUnit.SECONDS),
                     secondResult.get(2, TimeUnit.SECONDS)
             );
@@ -84,7 +84,7 @@ class DuplicateClaimFailureTest {
         }
     }
 
-    private static int countProcessedWorkers(boolean firstResult, boolean secondResult) {
+    private static int countProcessedWorkers(final boolean firstResult, final boolean secondResult) {
         return (firstResult ? 1 : 0) + (secondResult ? 1 : 0);
     }
 
@@ -94,27 +94,27 @@ class DuplicateClaimFailureTest {
         private final CyclicBarrier barrier;
 
         private BarrierRequestRepository(
-                ImageGenerationRequestRepository delegate,
-                CyclicBarrier barrier
+                final ImageGenerationRequestRepository delegate,
+                final CyclicBarrier barrier
         ) {
             this.delegate = delegate;
             this.barrier = barrier;
         }
 
         @Override
-        public long enqueue(String prompt) {
+        public long enqueue(final String prompt) {
             return delegate.enqueue(prompt);
         }
 
         @Override
         public Optional<ImageGenerationRequest> findOldest() {
-            Optional<ImageGenerationRequest> selected = delegate.findOldest();
+            final Optional<ImageGenerationRequest> selected = delegate.findOldest();
             awaitSelectionOfBothWorkers();
             return selected;
         }
 
         @Override
-        public void deleteById(long requestId) {
+        public void deleteById(final long requestId) {
             delegate.deleteById(requestId);
         }
 
@@ -126,10 +126,10 @@ class DuplicateClaimFailureTest {
         private void awaitSelectionOfBothWorkers() {
             try {
                 barrier.await(1, TimeUnit.SECONDS);
-            } catch (InterruptedException exception) {
+            } catch (final InterruptedException exception) {
                 Thread.currentThread().interrupt();
                 throw new AssertionError("작업 선택 동기화 중 스레드가 중단됐습니다.", exception);
-            } catch (BrokenBarrierException | TimeoutException exception) {
+            } catch (final BrokenBarrierException | TimeoutException exception) {
                 throw new AssertionError("두 워커가 제한 시간 안에 작업을 선택하지 못했습니다.", exception);
             }
         }

@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("failure-reproduction")
-class SchedulerContinuityFailureTest {
+final class SchedulerContinuityFailureTest {
 
     private MonsterRepository monsterRepository;
     private ImageGenerationRequestRepository requestRepository;
@@ -30,7 +30,7 @@ class SchedulerContinuityFailureTest {
 
     @BeforeEach
     void setUp() {
-        var dataSource = TestDatabase.createInitializedDataSource();
+        final var dataSource = TestDatabase.createInitializedDataSource();
         monsterRepository = new JdbcMonsterRepository(dataSource);
         requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
         imageGenerationService = new ImageGenerationService(monsterRepository, requestRepository);
@@ -38,10 +38,10 @@ class SchedulerContinuityFailureTest {
 
     @Test
     void 한_작업의_실패가_이후_polling을_중단하지_않는다() throws InterruptedException {
-        var firstAttempted = new CountDownLatch(1);
-        var laterJobProcessed = new CountDownLatch(1);
-        var invocationCount = new AtomicInteger();
-        ImageGenerator generator = prompt -> {
+        final var firstAttempted = new CountDownLatch(1);
+        final var laterJobProcessed = new CountDownLatch(1);
+        final var invocationCount = new AtomicInteger();
+        final ImageGenerator generator = prompt -> {
             if (invocationCount.incrementAndGet() == 1) {
                 firstAttempted.countDown();
                 throw new SimulatedGenerationFailureException();
@@ -49,7 +49,7 @@ class SchedulerContinuityFailureTest {
             laterJobProcessed.countDown();
             return "image:" + prompt;
         };
-        var worker = new DbPollingWorker(requestRepository, monsterRepository, generator);
+        final var worker = new DbPollingWorker(requestRepository, monsterRepository, generator);
 
         imageGenerationService.request("first request");
         try (var scheduler = new DbPollingScheduler(worker, Duration.ofMillis(10))) {
@@ -60,7 +60,7 @@ class SchedulerContinuityFailureTest {
             );
 
             imageGenerationService.request("later request");
-            boolean processed = laterJobProcessed.await(1, TimeUnit.SECONDS);
+            final boolean processed = laterJobProcessed.await(1, TimeUnit.SECONDS);
 
             assertAll(
                     () -> assertTrue(

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @Tag("failure-reproduction")
-class RequestRegistrationAtomicityFailureTest {
+final class RequestRegistrationAtomicityFailureTest {
 
     private DataSource dataSource;
     private ImageGenerationRequestRepository requestRepository;
@@ -31,14 +31,14 @@ class RequestRegistrationAtomicityFailureTest {
 
     @Test
     void monster와_이미지_생성_job은_함께_저장되거나_함께_저장되지_않는다() {
-        var service = new ImageGenerationService(
+        final var service = new ImageGenerationService(
                 new JdbcMonsterRepository(dataSource),
                 new EnqueueFailingRequestRepository(requestRepository)
         );
 
         assertThrows(SimulatedEnqueueFailureException.class, () -> service.request("blue dragon"));
 
-        Integer monsterCount = new JdbcTemplate(dataSource)
+        final Integer monsterCount = new JdbcTemplate(dataSource)
                 .queryForObject("SELECT COUNT(*) FROM monster", Integer.class);
         assertAll(
                 () -> assertEquals(
@@ -59,12 +59,12 @@ class RequestRegistrationAtomicityFailureTest {
 
         private final ImageGenerationRequestRepository delegate;
 
-        private EnqueueFailingRequestRepository(ImageGenerationRequestRepository delegate) {
+        private EnqueueFailingRequestRepository(final ImageGenerationRequestRepository delegate) {
             this.delegate = delegate;
         }
 
         @Override
-        public long enqueue(String prompt) {
+        public long enqueue(final String prompt) {
             throw new SimulatedEnqueueFailureException();
         }
 
@@ -74,7 +74,7 @@ class RequestRegistrationAtomicityFailureTest {
         }
 
         @Override
-        public void deleteById(long requestId) {
+        public void deleteById(final long requestId) {
             delegate.deleteById(requestId);
         }
 

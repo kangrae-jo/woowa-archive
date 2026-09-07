@@ -22,17 +22,17 @@ public final class JdbcImageGenerationRequestRepository implements ImageGenerati
 
     private final JdbcTemplate jdbcTemplate;
 
-    public JdbcImageGenerationRequestRepository(DataSource dataSource) {
+    public JdbcImageGenerationRequestRepository(final DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
 
     @Override
-    public long enqueue(String prompt) {
+    public long enqueue(final String prompt) {
         validatePrompt(prompt);
 
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        int updatedRows = jdbcTemplate.update(connection -> {
-            var statement = connection.prepareStatement(INSERT_SQL, new String[]{"id"});
+        final KeyHolder keyHolder = new GeneratedKeyHolder();
+        final int updatedRows = jdbcTemplate.update(connection -> {
+            final var statement = connection.prepareStatement(INSERT_SQL, new String[]{"id"});
             statement.setString(1, prompt);
             return statement;
         }, keyHolder);
@@ -45,7 +45,7 @@ public final class JdbcImageGenerationRequestRepository implements ImageGenerati
 
     @Override
     public Optional<ImageGenerationRequest> findOldest() {
-        List<ImageGenerationRequest> requests = jdbcTemplate.query(
+        final List<ImageGenerationRequest> requests = jdbcTemplate.query(
                 FIND_OLDEST_SQL,
                 (resultSet, rowNumber) -> new ImageGenerationRequest(
                         resultSet.getLong("id"),
@@ -56,20 +56,20 @@ public final class JdbcImageGenerationRequestRepository implements ImageGenerati
     }
 
     @Override
-    public void deleteById(long requestId) {
+    public void deleteById(final long requestId) {
         jdbcTemplate.update(DELETE_SQL, requestId);
     }
 
     @Override
     public long count() {
-        Long count = jdbcTemplate.queryForObject(COUNT_SQL, Long.class);
+        final Long count = jdbcTemplate.queryForObject(COUNT_SQL, Long.class);
         if (count == null) {
             throw new IllegalStateException("image generation request 개수를 조회할 수 없습니다.");
         }
         return count;
     }
 
-    private static void validatePrompt(String prompt) {
+    private static void validatePrompt(final String prompt) {
         if (prompt == null || prompt.isBlank()) {
             throw new IllegalArgumentException("prompt는 비어 있을 수 없습니다.");
         }

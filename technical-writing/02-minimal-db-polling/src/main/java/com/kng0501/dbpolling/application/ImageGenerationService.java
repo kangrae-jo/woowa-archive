@@ -9,15 +9,15 @@ public final class ImageGenerationService {
     private final ImageGenerationRequestRepository requestRepository;
 
     public ImageGenerationService(
-            MonsterRepository monsterRepository,
-            ImageGenerationRequestRepository requestRepository
+            final MonsterRepository monsterRepository,
+            final ImageGenerationRequestRepository requestRepository
     ) {
         this.monsterRepository = monsterRepository;
         this.requestRepository = requestRepository;
     }
 
-    public long request(String prompt) {
-        long monsterId = monsterRepository.save(prompt);
+    public long request(final String prompt) {
+        final long monsterId = monsterRepository.save(prompt);
         requestRepository.enqueue(prompt);
         return monsterId;
     }

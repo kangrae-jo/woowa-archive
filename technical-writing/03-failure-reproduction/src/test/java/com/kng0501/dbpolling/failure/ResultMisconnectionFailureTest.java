@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 @Tag("failure-reproduction")
-class ResultMisconnectionFailureTest {
+final class ResultMisconnectionFailureTest {
 
     private MonsterRepository monsterRepository;
     private ImageGenerationRequestRepository requestRepository;
@@ -26,7 +26,7 @@ class ResultMisconnectionFailureTest {
 
     @BeforeEach
     void setUp() {
-        var dataSource = TestDatabase.createInitializedDataSource();
+        final var dataSource = TestDatabase.createInitializedDataSource();
         monsterRepository = new JdbcMonsterRepository(dataSource);
         requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
         imageGenerationService = new ImageGenerationService(monsterRepository, requestRepository);
@@ -34,9 +34,9 @@ class ResultMisconnectionFailureTest {
 
     @Test
     void 생성_결과는_요청한_monster에만_연결된다() {
-        long unrelatedMonsterId = monsterRepository.save("unrelated");
-        long targetMonsterId = imageGenerationService.request("blue dragon");
-        var worker = new DbPollingWorker(
+        final long unrelatedMonsterId = monsterRepository.save("unrelated");
+        final long targetMonsterId = imageGenerationService.request("blue dragon");
+        final var worker = new DbPollingWorker(
                 requestRepository,
                 monsterRepository,
                 prompt -> "image:" + prompt
@@ -44,8 +44,8 @@ class ResultMisconnectionFailureTest {
 
         assertTrue(worker.pollOnce());
 
-        Monster unrelatedMonster = monsterRepository.findById(unrelatedMonsterId).orElseThrow();
-        Monster targetMonster = monsterRepository.findById(targetMonsterId).orElseThrow();
+        final Monster unrelatedMonster = monsterRepository.findById(unrelatedMonsterId).orElseThrow();
+        final Monster targetMonster = monsterRepository.findById(targetMonsterId).orElseThrow();
         assertAll(
                 () -> assertFalse(
                         unrelatedMonster.hasImage(),

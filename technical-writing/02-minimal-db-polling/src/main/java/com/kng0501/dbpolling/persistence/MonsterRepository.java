@@ -5,9 +5,9 @@ import java.util.Optional;
 
 public interface MonsterRepository {
 
-    long save(String prompt);
+    long save(final String prompt);
 
-    Optional<Monster> findById(long id);
+    Optional<Monster> findById(final long id);
 
-    void updateImage(long monsterId, String image);
+    void updateImage(final long monsterId, final String image);
 }

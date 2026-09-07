@@ -2,5 +2,5 @@ package com.kng0501.dbqueue.domain;
 
 @FunctionalInterface
 public interface ImageGenerator {
-    String generate(String prompt) throws Exception;
+    String generate(final String prompt) throws Exception;
 }

@@ -5,11 +5,11 @@ import java.util.Optional;
 
 public interface ImageGenerationRequestRepository {
 
-    long enqueue(String prompt);
+    long enqueue(final String prompt);
 
     Optional<ImageGenerationRequest> findOldest();
 
-    void deleteById(long requestId);
+    void deleteById(final long requestId);
 
     long count();
 }

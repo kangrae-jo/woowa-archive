@@ -28,7 +28,7 @@ public record QueueSettings(
         );
     }
 
-    private static void requirePositiveMillis(Duration value, String name) {
+    private static void requirePositiveMillis(final Duration value, final String name) {
         if (Objects.requireNonNull(value, name).toMillis() < 1) {
             throw new IllegalArgumentException(name + "는 1ms 이상이어야 합니다.");
         }

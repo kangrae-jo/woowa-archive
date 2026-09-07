@@ -28,10 +28,10 @@ public final class JobQueue {
     private final JdbcJobRepository jobs;
     private final TransactionTemplate transactions;
 
-    public JobQueue(DataSource dataSource, Clock clock, QueueSettings settings) {
+    public JobQueue(final DataSource dataSource, final Clock clock, final QueueSettings settings) {
         this.clock = Objects.requireNonNull(clock);
         this.settings = Objects.requireNonNull(settings);
-        var jdbc = new JdbcTemplate(dataSource);
+        final var jdbc = new JdbcTemplate(dataSource);
         this.monsters = new JdbcMonsterRepository(jdbc);
         this.jobs = new JdbcJobRepository(jdbc);
         this.transactions = new TransactionTemplate(new JdbcTransactionManager(dataSource));
@@ -39,14 +39,14 @@ public final class JobQueue {
         this.transactions.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    public Registration request(String prompt) {
+    public Registration request(final String prompt) {
         if (prompt == null || prompt.isBlank()) {
             throw new IllegalArgumentException("prompt는 비어 있을 수 없습니다.");
         }
         return transactions.execute(status -> {
-            Instant now = clock.instant();
-            long monsterId = monsters.save(prompt);
-            long jobId = jobs.enqueue(monsterId, prompt, now);
+            final Instant now = clock.instant();
+            final long monsterId = monsters.save(prompt);
+            final long jobId = jobs.enqueue(monsterId, prompt, now);
             return new Registration(jobId, monsterId);
         });
     }
@@ -55,10 +55,10 @@ public final class JobQueue {
         return jobs.findCandidate(clock.instant(), settings.maxAttempts());
     }
 
-    public Optional<Job> tryClaim(long jobId) {
+    public Optional<Job> tryClaim(final long jobId) {
         return transactions.execute(status -> {
-            Instant now = clock.instant();
-            UUID token = UUID.randomUUID();
+            final Instant now = clock.instant();
+            final UUID token = UUID.randomUUID();
             if (!jobs.claim(jobId, token, now, now.plus(settings.processingTimeout()), settings.maxAttempts())) {
                 return Optional.empty();
             }
@@ -66,13 +66,13 @@ public final class JobQueue {
         });
     }
 
-    public boolean complete(long jobId, UUID token, String image) {
+    public boolean complete(final long jobId, final UUID token, final String image) {
         return Boolean.TRUE.equals(transactions.execute(status -> {
             if (!jobs.markSucceeded(jobId, token, clock.instant())) {
                 return false;
             }
             // 조건부 전환으로 잠근 행에서 연결 키를 읽는다. 호출자가 준 Monster ID는 사용하지 않는다.
-            Job job = jobs.findById(jobId).orElseThrow();
+            final Job job = jobs.findById(jobId).orElseThrow();
             if (monsters.updateImage(job.monsterId(), image) != 1) {
                 throw new IllegalStateException("결과 갱신 대상 Monster가 없습니다: job_id=" + jobId);
             }
@@ -80,21 +80,21 @@ public final class JobQueue {
         }));
     }
 
-    public boolean fail(Job claim, Throwable cause) {
-        String reason = cause.getClass().getSimpleName() + ": " + cause.getMessage();
-        String storedReason = reason.substring(0, Math.min(reason.length(), 2000));
+    public boolean fail(final Job claim, final Throwable cause) {
+        final String reason = cause.getClass().getSimpleName() + ": " + cause.getMessage();
+        final String storedReason = reason.substring(0, Math.min(reason.length(), 2000));
         return Boolean.TRUE.equals(transactions.execute(status -> {
-            Instant now = clock.instant();
+            final Instant now = clock.instant();
             return jobs.fail(claim, now, now.plus(settings.retryDelay()), settings.maxAttempts(), storedReason);
         }));
     }
 
     public int recoverExpired() {
         int recovered = 0;
-        for (Job expired : jobs.findExpired(clock.instant(), RECOVERY_BATCH_SIZE)) {
+        for (final Job expired : jobs.findExpired(clock.instant(), RECOVERY_BATCH_SIZE)) {
             try {
-                boolean changed = Boolean.TRUE.equals(transactions.execute(status -> {
-                    Instant now = clock.instant();
+                final boolean changed = Boolean.TRUE.equals(transactions.execute(status -> {
+                    final Instant now = clock.instant();
                     return jobs.expire(expired, now, now.plus(settings.retryDelay()), settings.maxAttempts());
                 }));
                 if (changed) {
@@ -102,7 +102,7 @@ public final class JobQueue {
                     LOG.log(Level.WARNING, "job_id=" + expired.jobId() + " attempt_count="
                             + expired.attemptCount() + " cause=processing deadline expired");
                 }
-            } catch (RuntimeException failure) {
+            } catch (final RuntimeException failure) {
                 LOG.log(Level.ERROR, "job_id=" + expired.jobId() + " attempt_count="
                         + expired.attemptCount() + " cause=timeout recovery persistence failed", failure);
             }
@@ -110,11 +110,11 @@ public final class JobQueue {
         return recovered;
     }
 
-    public Optional<Job> findJob(long jobId) {
+    public Optional<Job> findJob(final long jobId) {
         return jobs.findById(jobId);
     }
 
-    public Optional<Monster> findMonster(long monsterId) {
+    public Optional<Monster> findMonster(final long monsterId) {
         return monsters.findById(monsterId);
     }
 

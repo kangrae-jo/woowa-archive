@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class DbPollingWorkerTest {
+final class DbPollingWorkerTest {
 
     private MonsterRepository monsterRepository;
     private ImageGenerationRequestRepository requestRepository;
@@ -25,7 +25,7 @@ class DbPollingWorkerTest {
 
     @BeforeEach
     void setUp() {
-        var dataSource = TestDatabase.createInitializedDataSource();
+        final var dataSource = TestDatabase.createInitializedDataSource();
         monsterRepository = new JdbcMonsterRepository(dataSource);
         requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
         imageGenerationService = new ImageGenerationService(monsterRepository, requestRepository);
@@ -33,10 +33,10 @@ class DbPollingWorkerTest {
 
     @Test
     void 요청_한_건을_조회해_이미지를_생성한다() {
-        long monsterId = imageGenerationService.request("blue dragon");
-        DbPollingWorker worker = createWorker();
+        final long monsterId = imageGenerationService.request("blue dragon");
+        final DbPollingWorker worker = createWorker();
 
-        boolean processed = worker.pollOnce();
+        final boolean processed = worker.pollOnce();
 
         assertTrue(processed);
         assertEquals(0, requestRepository.count());
@@ -45,32 +45,32 @@ class DbPollingWorkerTest {
 
     @Test
     void 처리할_요청이_없으면_false를_반환한다() {
-        DbPollingWorker worker = createWorker();
+        final DbPollingWorker worker = createWorker();
 
         assertFalse(worker.pollOnce());
     }
 
     @Test
     void scheduler가_주기적으로_요청을_polling한다() throws InterruptedException {
-        long monsterId = imageGenerationService.request("red turtle");
+        final long monsterId = imageGenerationService.request("red turtle");
 
         try (var scheduler = new DbPollingScheduler(createWorker(), Duration.ofMillis(10))) {
             scheduler.start();
 
-            Monster processed = awaitProcessedMonster(monsterId, Duration.ofSeconds(1));
+            final Monster processed = awaitProcessedMonster(monsterId, Duration.ofSeconds(1));
             assertEquals("image:red turtle", processed.image());
         }
     }
 
     private DbPollingWorker createWorker() {
-        ImageGenerator generator = prompt -> "image:" + prompt;
+        final ImageGenerator generator = prompt -> "image:" + prompt;
         return new DbPollingWorker(requestRepository, monsterRepository, generator);
     }
 
-    private Monster awaitProcessedMonster(long monsterId, Duration timeout) throws InterruptedException {
-        long deadline = System.nanoTime() + timeout.toNanos();
+    private Monster awaitProcessedMonster(final long monsterId, final Duration timeout) throws InterruptedException {
+        final long deadline = System.nanoTime() + timeout.toNanos();
         while (System.nanoTime() < deadline) {
-            Monster monster = findMonster(monsterId);
+            final Monster monster = findMonster(monsterId);
             if (monster.hasImage()) {
                 return monster;
             }
@@ -79,7 +79,7 @@ class DbPollingWorkerTest {
         return fail("제한 시간 안에 이미지 생성이 완료되지 않았습니다.");
     }
 
-    private Monster findMonster(long monsterId) {
+    private Monster findMonster(final long monsterId) {
         return monsterRepository.findById(monsterId).orElseThrow();
     }
 }

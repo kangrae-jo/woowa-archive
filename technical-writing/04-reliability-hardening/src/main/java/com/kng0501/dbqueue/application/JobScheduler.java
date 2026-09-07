@@ -27,7 +27,7 @@ public final class JobScheduler implements AutoCloseable {
     private boolean started;
     private boolean closed;
 
-    public JobScheduler(JobQueue queue, ImageGenerator generator, QueueSettings settings) {
+    public JobScheduler(final JobQueue queue, final ImageGenerator generator, final QueueSettings settings) {
         this(queue, generator, settings, new ThreadPoolExecutor(
                 settings.concurrency(), settings.concurrency(), 0, TimeUnit.MILLISECONDS,
                 new ArrayBlockingQueue<>(settings.concurrency()),
@@ -37,7 +37,7 @@ public final class JobScheduler implements AutoCloseable {
     }
 
     // 작업 제출 거부를 결정적으로 검증하기 위한 실행기 주입 지점.
-    JobScheduler(JobQueue queue, ImageGenerator generator, QueueSettings settings, ThreadPoolExecutor executions) {
+    JobScheduler(final JobQueue queue, final ImageGenerator generator, final QueueSettings settings, final ThreadPoolExecutor executions) {
         this.queue = queue;
         this.worker = new JobWorker(queue, generator);
         this.settings = settings;
@@ -74,18 +74,18 @@ public final class JobScheduler implements AutoCloseable {
             Job claim = null;
             boolean submitted = false;
             try {
-                Optional<Long> candidate = queue.findCandidate();
+                final Optional<Long> candidate = queue.findCandidate();
                 if (candidate.isEmpty()) {
                     return;
                 }
-                Optional<Job> selected = queue.tryClaim(candidate.get());
+                final Optional<Job> selected = queue.tryClaim(candidate.get());
                 if (selected.isEmpty()) {
                     return; // 경합에서 지면 다음 Polling까지 기다린다.
                 }
                 claim = selected.get();
                 executions.execute(new ClaimedTask(claim));
                 submitted = true;
-            } catch (RuntimeException failure) {
+            } catch (final RuntimeException failure) {
                 if (claim == null) {
                     throw failure;
                 }
@@ -99,10 +99,10 @@ public final class JobScheduler implements AutoCloseable {
         }
     }
 
-    private void runSafely(String operation, Runnable action) {
+    private void runSafely(final String operation, final Runnable action) {
         try {
             action.run();
-        } catch (RuntimeException failure) {
+        } catch (final RuntimeException failure) {
             LOG.log(Level.ERROR, "operation=" + operation
                     + " job_id=unassigned attempt_count=unknown cause=" + failure, failure);
         }
@@ -117,7 +117,7 @@ public final class JobScheduler implements AutoCloseable {
             closed = true;
         }
         control.shutdownNow();
-        for (Runnable task : executions.shutdownNow()) {
+        for (final Runnable task : executions.shutdownNow()) {
             ((ClaimedTask) task).cancelBeforeStart();
         }
         awaitTermination(control);
@@ -128,12 +128,12 @@ public final class JobScheduler implements AutoCloseable {
         return control.isTerminated() && executions.isTerminated();
     }
 
-    private static void awaitTermination(ExecutorService executor) {
+    private static void awaitTermination(final ExecutorService executor) {
         try {
             if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
                 LOG.log(Level.WARNING, "Executor가 종료되지 않았습니다. Generator의 interrupt 협조가 필요합니다.");
             }
-        } catch (InterruptedException interrupted) {
+        } catch (final InterruptedException interrupted) {
             Thread.currentThread().interrupt();
             LOG.log(Level.WARNING, "Executor 종료 대기가 중단됐습니다.", interrupted);
         }
@@ -143,7 +143,7 @@ public final class JobScheduler implements AutoCloseable {
         private final Job claim;
         private final AtomicBoolean accepted = new AtomicBoolean();
 
-        private ClaimedTask(Job claim) {
+        private ClaimedTask(final Job claim) {
             this.claim = claim;
         }
 
