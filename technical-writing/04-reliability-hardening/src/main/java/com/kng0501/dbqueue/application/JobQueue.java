@@ -5,21 +5,21 @@ import com.kng0501.dbqueue.domain.Monster;
 import com.kng0501.dbqueue.domain.QueueSettings;
 import com.kng0501.dbqueue.persistence.JdbcJobRepository;
 import com.kng0501.dbqueue.persistence.JdbcMonsterRepository;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.JdbcTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 public final class JobQueue {
-    private static final Logger LOG = System.getLogger(JobQueue.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(JobQueue.class);
     private static final int RECOVERY_BATCH_SIZE = 100;
 
     private final Clock clock;
@@ -99,12 +99,12 @@ public final class JobQueue {
                 }));
                 if (changed) {
                     recovered++;
-                    LOG.log(Level.WARNING, "job_id=" + expired.jobId() + " attempt_count="
-                            + expired.attemptCount() + " cause=processing deadline expired");
+                    LOG.warn("job_id={} attempt_count={} cause=processing deadline expired",
+                            expired.jobId(), expired.attemptCount());
                 }
             } catch (final RuntimeException failure) {
-                LOG.log(Level.ERROR, "job_id=" + expired.jobId() + " attempt_count="
-                        + expired.attemptCount() + " cause=timeout recovery persistence failed", failure);
+                LOG.error("job_id={} attempt_count={} cause=timeout recovery persistence failed",
+                        expired.jobId(), expired.attemptCount(), failure);
             }
         }
         return recovered;

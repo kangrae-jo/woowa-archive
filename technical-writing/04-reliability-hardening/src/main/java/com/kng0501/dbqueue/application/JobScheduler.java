@@ -3,8 +3,6 @@ package com.kng0501.dbqueue.application;
 import com.kng0501.dbqueue.domain.ImageGenerator;
 import com.kng0501.dbqueue.domain.Job;
 import com.kng0501.dbqueue.domain.QueueSettings;
-import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -14,9 +12,11 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class JobScheduler implements AutoCloseable {
-    private static final Logger LOG = System.getLogger(JobScheduler.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(JobScheduler.class);
 
     private final JobQueue queue;
     private final JobWorker worker;
@@ -103,8 +103,8 @@ public final class JobScheduler implements AutoCloseable {
         try {
             action.run();
         } catch (final RuntimeException failure) {
-            LOG.log(Level.ERROR, "operation=" + operation
-                    + " job_id=unassigned attempt_count=unknown cause=" + failure, failure);
+            LOG.error("operation={} job_id=unassigned attempt_count=unknown cause={}",
+                    operation, failure.toString(), failure);
         }
     }
 
@@ -131,11 +131,11 @@ public final class JobScheduler implements AutoCloseable {
     private static void awaitTermination(final ExecutorService executor) {
         try {
             if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                LOG.log(Level.WARNING, "Executor가 종료되지 않았습니다. Generator의 interrupt 협조가 필요합니다.");
+                LOG.warn("Executor가 종료되지 않았습니다. Generator의 interrupt 협조가 필요합니다.");
             }
         } catch (final InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            LOG.log(Level.WARNING, "Executor 종료 대기가 중단됐습니다.", interrupted);
+            LOG.warn("Executor 종료 대기가 중단됐습니다.", interrupted);
         }
     }
 

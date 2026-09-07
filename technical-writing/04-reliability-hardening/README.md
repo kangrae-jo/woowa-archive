@@ -133,6 +133,7 @@ sequenceDiagram
 - 선점 후 제출이 거부되면 해당 Job에 실패·재시도 정책을 적용하고 슬롯을 반환한다. 실패 기록도 불가능하면 `RUNNING`과 기한을 유지해 복구가 다시 시도한다.
 - [`JobWorker`](./src/main/java/com/kng0501/dbqueue/application/JobWorker.java)는 Generator·완료 처리 예외를 Job 실패로 연결한다. DB에 실패를 기록하지 못하면 오류를 기록하고 기한 복구에 맡긴다.
 - Scheduler 경계는 `RuntimeException`을 기록하고 다음 반복 실행을 유지한다. `job_id`, `attempt_count`, 원인과 예외를 남긴다. 후보를 얻기 전의 인프라 오류는 식별자를 알 수 없어 `unassigned`·`unknown`과 연산명을 기록한다.
+- 로그는 SLF4J API로 기록하고 `slf4j-simple`을 콘솔 출력 provider로 사용한다. `{}` 매개변수 로깅과 마지막 Throwable 인자로 식별 정보·원인·스택 트레이스를 보존한다. API와 provider 버전은 동일 SLF4J BOM으로 맞춘다.
 - 복구는 한 번에 최대 100건을 조회해 작업별 트랜잭션으로 처리한다. 한 건의 기록 실패는 다른 후보의 복구를 중단하지 않는다. 반복적으로 실패하는 선두 100건에 의한 지연까지 해결하는 공정성 정책은 없다.
 - `close()`는 제어·실행 풀을 중단하고 제출됐지만 시작하지 않은 Job에도 실패 정책을 적용한다. 각 풀의 종료를 최대 5초 기다리며, 끝나지 않으면 경고를 남긴다. `Error`나 interrupt에 협조하지 않는 Generator를 강제로 정상 종료하는 보장은 없다.
 
