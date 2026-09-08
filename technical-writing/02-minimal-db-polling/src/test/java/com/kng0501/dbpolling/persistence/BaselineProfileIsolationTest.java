@@ -10,7 +10,7 @@ import com.kng0501.dbpolling.persistence.entity.BaselineImageGenerationRequestEn
 import com.kng0501.dbpolling.persistence.entity.BaselineMonsterEntity;
 import com.kng0501.dbpolling.persistence.jpa.BaselineMonsterJpaRepository;
 import com.kng0501.dbqueue.application.JobQueue;
-import com.kng0501.dbqueue.persistence.ImageGenerationJobJpaRepository;
+import com.kng0501.dbqueue.persistence.jpa.ImageGenerationJobJpaRepository;
 import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
 import jakarta.persistence.EntityManagerFactory;
 import java.util.Set;

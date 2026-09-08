@@ -10,6 +10,7 @@ import com.kng0501.dbpolling.persistence.jpa.BaselineMonsterJpaRepository;
 import com.kng0501.dbqueue.application.JobQueue;
 import com.kng0501.dbqueue.persistence.entity.ImageGenerationJobEntity;
 import com.kng0501.dbqueue.persistence.entity.QueueMonsterEntity;
+import com.kng0501.dbqueue.persistence.jpa.ImageGenerationJobJpaRepository;
 import com.kng0501.technicalwriting.testsupport.HardenedIntegrationTest;
 import jakarta.persistence.EntityManagerFactory;
 import java.util.Set;

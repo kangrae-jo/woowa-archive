@@ -1,4 +1,4 @@
-package com.kng0501.dbqueue.persistence;
+package com.kng0501.dbqueue.persistence.jpa;
 
 import com.kng0501.dbqueue.domain.Job;
 import com.kng0501.dbqueue.domain.JobStatus;

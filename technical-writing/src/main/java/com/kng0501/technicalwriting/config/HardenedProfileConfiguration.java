@@ -2,8 +2,8 @@ package com.kng0501.technicalwriting.config;
 
 import com.kng0501.dbqueue.domain.ImageGenerator;
 import com.kng0501.dbqueue.domain.QueueSettings;
-import com.kng0501.dbqueue.persistence.ImageGenerationJobJpaRepository;
 import com.kng0501.dbqueue.persistence.entity.ImageGenerationJobEntity;
+import com.kng0501.dbqueue.persistence.jpa.ImageGenerationJobJpaRepository;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;

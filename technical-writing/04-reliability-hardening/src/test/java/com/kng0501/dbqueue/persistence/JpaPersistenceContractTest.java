@@ -13,6 +13,7 @@ import com.kng0501.dbqueue.domain.JobStatus;
 import com.kng0501.dbqueue.domain.QueueSettings;
 import com.kng0501.dbqueue.persistence.entity.ImageGenerationJobEntity;
 import com.kng0501.dbqueue.persistence.entity.QueueMonsterEntity;
+import com.kng0501.dbqueue.persistence.jpa.ImageGenerationJobJpaRepository;
 import com.kng0501.dbqueue.support.MutableClock;
 import com.kng0501.technicalwriting.testsupport.HardenedIntegrationTest;
 import com.kng0501.technicalwriting.testsupport.SqlCaptureInspector;

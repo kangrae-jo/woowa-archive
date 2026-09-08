@@ -2,8 +2,8 @@ package com.kng0501.dbqueue.application;
 
 import com.kng0501.dbqueue.domain.Job;
 import com.kng0501.dbqueue.domain.JobStatus;
-import com.kng0501.dbqueue.persistence.ImageGenerationJobJpaRepository;
-import com.kng0501.dbqueue.persistence.JobProjection;
+import com.kng0501.dbqueue.persistence.jpa.ImageGenerationJobJpaRepository;
+import com.kng0501.dbqueue.persistence.jpa.JobProjection;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

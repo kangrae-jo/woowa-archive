@@ -3,7 +3,7 @@ package com.kng0501.dbqueue.application;
 import com.kng0501.dbqueue.domain.Job;
 import com.kng0501.dbqueue.domain.JobStatus;
 import com.kng0501.dbqueue.domain.QueueSettings;
-import com.kng0501.dbqueue.persistence.ImageGenerationJobJpaRepository;
+import com.kng0501.dbqueue.persistence.jpa.ImageGenerationJobJpaRepository;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
