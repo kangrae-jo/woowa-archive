@@ -1,0 +1,16 @@
+spring:
+  config:
+    activate:
+      on-profile: hardened
+  sql:
+    init:
+      schema-locations: classpath:db/hardening/schema.sql
+
+db-queue:
+  processing-timeout: 30s
+  max-attempts: 3
+  retry-delay: 1s
+  concurrency: 2
+  polling-interval: 100ms
+  recovery-interval: 100ms
+  scheduling-enabled: true

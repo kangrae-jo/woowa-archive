@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'org.springframework.boot' version '3.5.16'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 java {
@@ -12,12 +14,14 @@ sourceSets {
     main {
         java {
             srcDirs = [
+                    'src/main/java',
                     '02-minimal-db-polling/src/main/java',
                     '04-reliability-hardening/src/main/java'
             ]
         }
         resources {
             srcDirs = [
+                    'src/main/resources',
                     '02-minimal-db-polling/src/main/resources',
                     '04-reliability-hardening/src/main/resources'
             ]
@@ -26,6 +30,7 @@ sourceSets {
     test {
         java {
             srcDirs = [
+                    'src/test/java',
                     '02-minimal-db-polling/src/test/java',
                     '03-failure-reproduction/src/test/java',
                     '04-reliability-hardening/src/test/java'
@@ -33,6 +38,7 @@ sourceSets {
         }
         resources {
             srcDirs = [
+                    'src/test/resources',
                     '02-minimal-db-polling/src/test/resources',
                     '03-failure-reproduction/src/test/resources',
                     '04-reliability-hardening/src/test/resources'
@@ -42,21 +48,14 @@ sourceSets {
 }
 
 dependencies {
-    implementation platform('org.springframework:spring-framework-bom:6.2.8')
-    implementation 'org.springframework:spring-context'
-    implementation 'org.springframework:spring-jdbc'
-
-    implementation platform('org.slf4j:slf4j-bom:2.0.17')
-    implementation 'org.slf4j:slf4j-api'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
     compileOnly 'org.projectlombok:lombok:1.18.46'
     annotationProcessor 'org.projectlombok:lombok:1.18.46'
 
-    runtimeOnly 'com.h2database:h2:2.4.240'
-    runtimeOnly 'org.slf4j:slf4j-simple'
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

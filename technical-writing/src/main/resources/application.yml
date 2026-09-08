@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: db-polling-technical-writing
+  profiles:
+    default: hardened
+  main:
+    web-application-type: none
+  datasource:
+    url: ${TECHNICAL_WRITING_DB_URL}
+    username: ${TECHNICAL_WRITING_DB_USERNAME}
+    password: ${TECHNICAL_WRITING_DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-init-sql: SET time_zone = '+00:00'
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  sql:
+    init:
+      mode: always
+
+logging:
+  level:
+    org.hibernate.SQL: INFO
