@@ -55,4 +55,4 @@ flowchart LR
 
 ## 다음 단계
 
-[02단계](../02-minimal-db-polling/README.md)에서는 2025년 당시 안정화 이후 구조와 유사한 최소 DB Polling 구조를 Java 21과 Spring JDBC로 재구성한다. 목적은 과거 장애 원인을 확정하는 것이 아니라, 현재 기준에서 신뢰성 불변식을 검증할 수 있는 기준 코드를 만드는 것이다.
+[02단계](../02-minimal-db-polling/README.md)에서는 2025년 당시 안정화 이후 구조와 유사한 최소 DB Polling 구조를 Java 21, Spring Boot, Spring Data JPA로 재구성한다. 목적은 과거 장애 원인을 확정하는 것이 아니라, 현재 기준에서 신뢰성 불변식을 검증할 수 있는 기준 코드를 만드는 것이다. 이 기술 구성 변경은 위 과거 사실과 당시 대응 평가를 바꾸지 않는다.
