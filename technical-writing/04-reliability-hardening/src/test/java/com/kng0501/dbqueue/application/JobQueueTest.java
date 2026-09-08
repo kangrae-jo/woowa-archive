@@ -1,13 +1,25 @@
 package com.kng0501.dbqueue.application;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.cleanHardened;
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.count;
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.deleteMonsterWithoutForeignKeyCheck;
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.dropCheckIfExists;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kng0501.dbqueue.domain.Job;
 import com.kng0501.dbqueue.domain.JobStatus;
 import com.kng0501.dbqueue.domain.QueueSettings;
 import com.kng0501.dbqueue.support.MutableClock;
-import com.kng0501.dbqueue.support.QueueTestDatabase;
+import com.kng0501.technicalwriting.testsupport.HardenedIntegrationTest;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CyclicBarrier;
@@ -16,35 +28,53 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.dao.DataAccessException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 
+@HardenedIntegrationTest
 final class JobQueueTest {
-    private QueueTestDatabase db;
-    private MutableClock clock;
-    private QueueSettings settings;
-    private JobQueue queue;
+
+    private final JdbcTemplate jdbc;
+    private final MutableClock clock;
+    private final QueueSettings settings;
+    private final JobQueue queue;
+
+    @Autowired
+    JobQueueTest(
+            final JdbcTemplate jdbc,
+            final MutableClock clock,
+            final QueueSettings settings,
+            final JobQueue queue
+    ) {
+        this.jdbc = jdbc;
+        this.clock = clock;
+        this.settings = settings;
+        this.queue = queue;
+    }
 
     @BeforeEach
     void setUp() {
-        db = new QueueTestDatabase();
-        clock = new MutableClock();
-        settings = QueueSettings.experimentalDefaults();
-        queue = new JobQueue(db.dataSource, clock, settings);
+        dropFaultConstraints();
+        cleanHardened(jdbc);
+        clock.reset();
     }
 
     @AfterEach
     void tearDown() {
-        db.close();
+        dropFaultConstraints();
+        cleanHardened(jdbc);
+        clock.reset();
     }
 
     @Test
     void 등록은_Monster와_PENDING_Job을_함께_저장한다() {
-        final var registered = queue.request("dragon");
+        final JobQueue.Registration registered = queue.request("dragon");
         final Job job = job(registered.jobId());
 
         assertAll(
-                () -> assertEquals(1, db.count("queue_monster")),
-                () -> assertEquals(1, db.count("image_generation_job")),
+                () -> assertEquals(1, count(jdbc, "queue_monster")),
+                () -> assertEquals(1, count(jdbc, "image_generation_job")),
                 () -> assertEquals(registered.monsterId(), job.monsterId()),
                 () -> assertEquals(JobStatus.PENDING, job.status()),
                 () -> assertEquals(0, job.attemptCount()),
@@ -57,30 +87,37 @@ final class JobQueueTest {
 
     @Test
     void Job_INSERT가_실패하면_먼저_저장한_Monster도_롤백한다() {
-        db.jdbc.execute("ALTER TABLE image_generation_job ADD CONSTRAINT reject_job CHECK (prompt <> 'enqueue-fail')");
+        jdbc.execute("ALTER TABLE image_generation_job ADD CONSTRAINT reject_job "
+                + "CHECK (prompt <> 'enqueue-fail')");
+        try {
+            assertThrows(DataIntegrityViolationException.class, () -> queue.request("enqueue-fail"));
+        } finally {
+            dropCheckIfExists(jdbc, "image_generation_job", "reject_job");
+        }
 
-        assertThrows(DataAccessException.class, () -> queue.request("enqueue-fail"));
-
-        assertEquals(0, db.count("queue_monster"));
-        assertEquals(0, db.count("image_generation_job"));
+        assertEquals(0, count(jdbc, "queue_monster"));
+        assertEquals(0, count(jdbc, "image_generation_job"));
     }
 
     @Test
     void Monster_INSERT가_실패하면_Job도_저장하지_않는다() {
-        db.jdbc.execute("ALTER TABLE queue_monster ADD CONSTRAINT reject_monster CHECK (prompt <> 'save-fail')");
+        jdbc.execute("ALTER TABLE queue_monster ADD CONSTRAINT reject_monster "
+                + "CHECK (prompt <> 'save-fail')");
+        try {
+            assertThrows(DataIntegrityViolationException.class, () -> queue.request("save-fail"));
+        } finally {
+            dropCheckIfExists(jdbc, "queue_monster", "reject_monster");
+        }
 
-        assertThrows(DataAccessException.class, () -> queue.request("save-fail"));
-
-        assertEquals(0, db.count("queue_monster"));
-        assertEquals(0, db.count("image_generation_job"));
+        assertEquals(0, count(jdbc, "queue_monster"));
+        assertEquals(0, count(jdbc, "image_generation_job"));
     }
 
     @Test
     void 같은_후보를_읽은_두_Worker_중_조건부_UPDATE가_성공한_하나만_선점한다() throws Exception {
-        final var registered = queue.request("dragon");
-        final var otherQueue = new JobQueue(db.dataSource, clock, settings);
+        final JobQueue.Registration registered = queue.request("dragon");
         final long firstCandidate = queue.findCandidate().orElseThrow();
-        final long secondCandidate = otherQueue.findCandidate().orElseThrow();
+        final long secondCandidate = queue.findCandidate().orElseThrow();
         assertEquals(firstCandidate, secondCandidate);
         final var barrier = new CyclicBarrier(2);
         final var executor = Executors.newFixedThreadPool(2);
@@ -91,7 +128,7 @@ final class JobQueueTest {
             });
             final var second = executor.submit(() -> {
                 barrier.await(3, TimeUnit.SECONDS);
-                return otherQueue.tryClaim(secondCandidate);
+                return queue.tryClaim(secondCandidate);
             });
             final Optional<Job> a = first.get(5, TimeUnit.SECONDS);
             final Optional<Job> b = second.get(5, TimeUnit.SECONDS);
@@ -110,11 +147,11 @@ final class JobQueueTest {
 
     @Test
     void 결과는_Job_ID가_아닌_명시적_Monster_FK로_연결한다() {
-        db.jdbc.update("INSERT INTO queue_monster(prompt) VALUES ('unrelated')");
-        final long unrelatedId = db.jdbc.queryForObject(
+        jdbc.update("INSERT INTO queue_monster(prompt) VALUES ('unrelated')");
+        final long unrelatedId = jdbc.queryForObject(
                 "SELECT monster_id FROM queue_monster WHERE prompt = 'unrelated'", Long.class
         );
-        final var registered = queue.request("dragon");
+        final JobQueue.Registration registered = queue.request("dragon");
         assertNotEquals(registered.jobId(), registered.monsterId());
         final Job claim = queue.tryClaim(registered.jobId()).orElseThrow();
 
@@ -124,22 +161,27 @@ final class JobQueueTest {
         assertNull(queue.findMonster(unrelatedId).orElseThrow().image());
         assertEquals(JobStatus.SUCCEEDED, job(claim.jobId()).status());
         assertEquals(clock.instant(), job(claim.jobId()).finishedAt());
-        assertEquals(1, db.count("image_generation_job"));
+        assertEquals(1, count(jdbc, "image_generation_job"));
     }
 
     @Test
     void Monster_UPDATE가_실패하면_SUCCEEDED_전환도_롤백한다() {
         final Job claim = claim("dragon");
-        db.jdbc.execute("ALTER TABLE queue_monster ADD CONSTRAINT reject_image CHECK (image IS NULL)");
-
-        assertThrows(DataAccessException.class, () -> queue.complete(claim.jobId(), claim.claimToken(), "image:dragon"));
+        jdbc.execute("ALTER TABLE queue_monster ADD CONSTRAINT reject_image CHECK (image IS NULL)");
+        try {
+            assertThrows(
+                    DataIntegrityViolationException.class,
+                    () -> queue.complete(claim.jobId(), claim.claimToken(), "image:dragon")
+            );
+        } finally {
+            dropCheckIfExists(jdbc, "queue_monster", "reject_image");
+        }
 
         assertEquals(JobStatus.RUNNING, job(claim.jobId()).status());
         assertEquals(claim.claimToken(), job(claim.jobId()).claimToken());
         assertNull(job(claim.jobId()).finishedAt());
         assertNull(queue.findMonster(claim.monsterId()).orElseThrow().image());
 
-        db.jdbc.execute("ALTER TABLE queue_monster DROP CONSTRAINT reject_image");
         assertTrue(queue.complete(claim.jobId(), claim.claimToken(), "image:dragon"));
         assertEquals(JobStatus.SUCCEEDED, job(claim.jobId()).status());
         assertEquals("image:dragon", queue.findMonster(claim.monsterId()).orElseThrow().image());
@@ -148,11 +190,12 @@ final class JobQueueTest {
     @Test
     void 결과_대상_행이_없어도_SUCCEEDED_전환을_롤백한다() {
         final Job claim = claim("dragon");
-        // 정상 FK로는 불가능한 데이터 손상을 주입해 UPDATE 0행 방어를 확인한다.
-        db.jdbc.execute("SET REFERENTIAL_INTEGRITY FALSE");
-        db.jdbc.update("DELETE FROM queue_monster WHERE monster_id = ?", claim.monsterId());
+        deleteMonsterWithoutForeignKeyCheck(jdbc, claim.monsterId());
 
-        assertThrows(IllegalStateException.class, () -> queue.complete(claim.jobId(), claim.claimToken(), "image"));
+        assertThrows(
+                IllegalStateException.class,
+                () -> queue.complete(claim.jobId(), claim.claimToken(), "image")
+        );
 
         assertEquals(JobStatus.RUNNING, job(claim.jobId()).status());
         assertEquals(claim.claimToken(), job(claim.jobId()).claimToken());
@@ -225,11 +268,11 @@ final class JobQueueTest {
     @Test
     void 기한_직전에는_복구하지_않고_정확히_기한부터_복구한다() {
         final Job claim = claim("dragon");
-        clock.advance(settings.processingTimeout().minusNanos(1));
+        clock.advance(settings.processingTimeout().minus(1, ChronoUnit.MICROS));
         assertEquals(0, queue.recoverExpired());
         assertEquals(JobStatus.RUNNING, job(claim.jobId()).status());
 
-        clock.advance(Duration.ofNanos(1));
+        clock.advance(Duration.of(1, ChronoUnit.MICROS));
         assertEquals(1, queue.recoverExpired());
         final Job pending = job(claim.jobId());
         assertEquals(JobStatus.PENDING, pending.status());
@@ -244,7 +287,7 @@ final class JobQueueTest {
     @Test
     void 기한_직전의_완료는_허용한다() {
         final Job claim = claim("dragon");
-        clock.advance(settings.processingTimeout().minusNanos(1));
+        clock.advance(settings.processingTimeout().minus(1, ChronoUnit.MICROS));
 
         assertTrue(queue.complete(claim.jobId(), claim.claimToken(), "image"));
         assertEquals(0, queue.recoverExpired());
@@ -262,10 +305,10 @@ final class JobQueueTest {
             assertTrue(failedAttempt.lastError().contains("generation failed"));
             if (attempt < settings.maxAttempts()) {
                 assertEquals(JobStatus.PENDING, failedAttempt.status());
-                clock.advance(settings.retryDelay().minusNanos(1));
+                clock.advance(settings.retryDelay().minus(1, ChronoUnit.MICROS));
                 assertTrue(queue.findCandidate().isEmpty());
                 assertTrue(queue.tryClaim(current.jobId()).isEmpty());
-                clock.advance(Duration.ofNanos(1));
+                clock.advance(Duration.of(1, ChronoUnit.MICROS));
                 assertEquals(current.jobId(), queue.findCandidate().orElseThrow());
                 current = queue.tryClaim(current.jobId()).orElseThrow();
             }
@@ -278,22 +321,24 @@ final class JobQueueTest {
         assertTrue(queue.findCandidate().isEmpty());
         assertTrue(queue.tryClaim(ended.jobId()).isEmpty());
         assertEquals(0, queue.recoverExpired());
-        assertEquals(1, db.count("image_generation_job"));
+        assertEquals(1, count(jdbc, "image_generation_job"));
     }
 
     @Test
     void 마지막_시도의_타임아웃은_FAILED로_종료한다() {
-        final var oneAttempt = new QueueSettings(settings.processingTimeout(), 1, settings.retryDelay(),
-                1, settings.pollingInterval(), settings.recoveryInterval());
-        queue = new JobQueue(db.dataSource, clock, oneAttempt);
-        final Job claim = claim("dragon");
+        Job current = claim("dragon");
+        while (current.attemptCount() < settings.maxAttempts()) {
+            assertTrue(queue.fail(current, new IllegalStateException("retry before timeout")));
+            clock.advance(settings.retryDelay());
+            current = queue.tryClaim(current.jobId()).orElseThrow();
+        }
 
         clock.advance(settings.processingTimeout());
         assertEquals(1, queue.recoverExpired());
 
-        final Job ended = job(claim.jobId());
+        final Job ended = job(current.jobId());
         assertEquals(JobStatus.FAILED, ended.status());
-        assertEquals(1, ended.attemptCount());
+        assertEquals(settings.maxAttempts(), ended.attemptCount());
         assertEquals(clock.instant(), ended.finishedAt());
         assertNull(ended.claimToken());
         assertNull(ended.deadlineAt());
@@ -306,5 +351,11 @@ final class JobQueueTest {
 
     private Job job(final long jobId) {
         return queue.findJob(jobId).orElseThrow();
+    }
+
+    private void dropFaultConstraints() {
+        dropCheckIfExists(jdbc, "image_generation_job", "reject_job");
+        dropCheckIfExists(jdbc, "queue_monster", "reject_monster");
+        dropCheckIfExists(jdbc, "queue_monster", "reject_image");
     }
 }

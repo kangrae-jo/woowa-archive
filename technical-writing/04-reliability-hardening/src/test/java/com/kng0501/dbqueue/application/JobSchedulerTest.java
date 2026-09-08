@@ -1,16 +1,23 @@
 package com.kng0501.dbqueue.application;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.cleanHardened;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 import com.kng0501.dbqueue.domain.Job;
 import com.kng0501.dbqueue.domain.JobStatus;
 import com.kng0501.dbqueue.domain.QueueSettings;
 import com.kng0501.dbqueue.support.MutableClock;
-import com.kng0501.dbqueue.support.QueueTestDatabase;
-import java.time.Duration;
+import com.kng0501.technicalwriting.testsupport.HardenedIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.HardenedTestImageGenerator;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,84 +28,114 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.DirtiesContext;
 
+@HardenedIntegrationTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 final class JobSchedulerTest {
-    private QueueTestDatabase db;
-    private MutableClock clock;
-    private QueueSettings settings;
-    private JobQueue queue;
+
+    private final JdbcTemplate jdbc;
+    private final MutableClock clock;
+    private final QueueSettings settings;
+    private final JobQueue queue;
+    private final JobScheduler scheduler;
+    private final HardenedTestImageGenerator generator;
+    private final ThreadPoolExecutor executionPool;
+
+    @Autowired
+    JobSchedulerTest(
+            final JdbcTemplate jdbc,
+            final MutableClock clock,
+            final QueueSettings settings,
+            final JobQueue queue,
+            final JobScheduler scheduler,
+            final HardenedTestImageGenerator generator,
+            @Qualifier("jobExecutionExecutor") final ThreadPoolExecutor executionPool
+    ) {
+        this.jdbc = jdbc;
+        this.clock = clock;
+        this.settings = settings;
+        this.queue = queue;
+        this.scheduler = scheduler;
+        this.generator = generator;
+        this.executionPool = executionPool;
+    }
 
     @BeforeEach
     void setUp() {
-        db = new QueueTestDatabase();
-        clock = new MutableClock();
-        settings = new QueueSettings(
-                Duration.ofSeconds(30), 3, Duration.ofSeconds(1), 2,
-                Duration.ofMillis(10), Duration.ofMillis(10)
-        );
-        queue = new JobQueue(db.dataSource, clock, settings);
+        cleanHardened(jdbc);
+        clock.reset();
+        generator.reset();
     }
 
     @AfterEach
     void tearDown() {
-        db.close();
+        scheduler.close();
+        cleanHardened(jdbc);
+        clock.reset();
+        generator.reset();
     }
 
     @Test
     void 첫_작업_실패_이후_등록한_특정_Job의_완료와_이미지를_확인한다() throws Exception {
-        final var first = queue.request("first-fails");
+        final JobQueue.Registration first = queue.request("first-fails");
         final var firstAttempted = new CountDownLatch(1);
-        final var scheduler = new JobScheduler(queue, prompt -> {
+        generator.use(prompt -> {
             if (prompt.equals("first-fails")) {
                 firstAttempted.countDown();
                 throw new IllegalStateException("expected generation failure");
             }
             return "image:" + prompt;
-        }, settings);
-        try (scheduler) {
-            scheduler.start();
-            assertTrue(firstAttempted.await(5, TimeUnit.SECONDS));
-            final var later = queue.request("later-success");
+        });
 
-            final Job completed = awaitJob(later.jobId(), job -> job.status() == JobStatus.SUCCEEDED);
+        scheduler.dispatch();
+        assertTrue(firstAttempted.await(5, TimeUnit.SECONDS));
+        awaitJob(first.jobId(), job -> job.status() == JobStatus.PENDING);
+        final JobQueue.Registration later = queue.request("later-success");
+        scheduler.dispatch();
 
-            assertEquals(later.jobId(), completed.jobId());
-            assertEquals("image:later-success", queue.findMonster(later.monsterId()).orElseThrow().image());
-            final Job failed = awaitJob(first.jobId(), job -> job.status() == JobStatus.PENDING);
-            assertEquals(1, failed.attemptCount());
-            assertTrue(failed.lastError().contains("expected generation failure"));
-        }
-        assertTrue(scheduler.isTerminated());
+        final Job completed = awaitJob(later.jobId(), job -> job.status() == JobStatus.SUCCEEDED);
+        assertEquals(later.jobId(), completed.jobId());
+        assertEquals("image:later-success", queue.findMonster(later.monsterId()).orElseThrow().image());
+        final Job failed = queue.findJob(first.jobId()).orElseThrow();
+        assertEquals(1, failed.attemptCount());
+        assertTrue(failed.lastError().contains("expected generation failure"));
     }
 
     @Test
-    void Scheduler_경계로_전파된_조회_예외_이후에도_반복_Polling을_계속한다() throws Exception {
-        final var target = queue.request("after-query-error");
-        db.dataSource.failNextCandidateQuery();
-        final var scheduler = new JobScheduler(queue, prompt -> "image:" + prompt, settings);
-        try (scheduler) {
-            scheduler.start();
-            assertTrue(db.dataSource.candidateFailureObserved.await(5, TimeUnit.SECONDS));
+    void Scheduler_경계의_예외를_격리한_뒤_후속_Job을_처리한다() throws Exception {
+        final JobQueue.Registration target = queue.request("after-boundary-error");
+        final JobScheduler failingOnce = mock(JobScheduler.class);
+        doThrow(new IllegalStateException("injected dispatch failure"))
+                .doAnswer(invocation -> {
+                    scheduler.dispatch();
+                    return null;
+                })
+                .when(failingOnce).dispatch();
+        final var tasks = new JobPollingTasks(queue, failingOnce);
 
-            final Job completed = awaitJob(target.jobId(), job -> job.status() == JobStatus.SUCCEEDED);
+        assertDoesNotThrow(tasks::dispatch);
+        tasks.dispatch();
 
-            assertEquals(1, completed.attemptCount());
-            assertEquals("image:after-query-error", queue.findMonster(target.monsterId()).orElseThrow().image());
-        }
-        assertTrue(scheduler.isTerminated());
+        final Job completed = awaitJob(target.jobId(), job -> job.status() == JobStatus.SUCCEEDED);
+        assertEquals(1, completed.attemptCount());
+        assertEquals("image:after-boundary-error", queue.findMonster(target.monsterId()).orElseThrow().image());
     }
 
     @Test
     void 실행_슬롯_수만큼만_선점하고_초과_작업은_DB에서_대기한다() throws Exception {
         final List<JobQueue.Registration> registered = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            registered.add(queue.request("job-" + i));
+        for (int index = 0; index < 4; index++) {
+            registered.add(queue.request("job-" + index));
         }
         final var started = new CountDownLatch(settings.concurrency());
         final var release = new CountDownLatch(1);
         final var active = new AtomicInteger();
         final var maximum = new AtomicInteger();
-        final var scheduler = new JobScheduler(queue, prompt -> {
+        generator.use(prompt -> {
             maximum.accumulateAndGet(active.incrementAndGet(), Math::max);
             started.countDown();
             try {
@@ -109,44 +146,45 @@ final class JobSchedulerTest {
             } finally {
                 active.decrementAndGet();
             }
-        }, settings);
-        try (scheduler) {
-            try {
-                scheduler.start();
-                assertTrue(started.await(5, TimeUnit.SECONDS));
-                scheduler.dispatch();
-                scheduler.dispatch();
-                assertEquals(2, active.get());
-                assertEquals(2, db.jdbc.queryForObject(
-                        "SELECT COUNT(*) FROM image_generation_job WHERE status = 'RUNNING'", Integer.class));
-                for (int i = 2; i < registered.size(); i++) {
-                    final Job waiting = queue.findJob(registered.get(i).jobId()).orElseThrow();
-                    assertEquals(JobStatus.PENDING, waiting.status());
-                    assertEquals(0, waiting.attemptCount());
-                }
-            } finally {
-                release.countDown();
+        });
+
+        try {
+            scheduler.dispatch();
+            assertTrue(started.await(5, TimeUnit.SECONDS));
+            scheduler.dispatch();
+            assertEquals(2, active.get());
+            assertEquals(2, jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM image_generation_job WHERE status = 'RUNNING'", Integer.class
+            ));
+            for (int index = 2; index < registered.size(); index++) {
+                final Job waiting = queue.findJob(registered.get(index).jobId()).orElseThrow();
+                assertEquals(JobStatus.PENDING, waiting.status());
+                assertEquals(0, waiting.attemptCount());
             }
-            for (final var target : registered) {
-                awaitJob(target.jobId(), job -> job.status() == JobStatus.SUCCEEDED);
-                assertEquals("image:" + queue.findJob(target.jobId()).orElseThrow().prompt(),
-                        queue.findMonster(target.monsterId()).orElseThrow().image());
-            }
-            assertEquals(settings.concurrency(), maximum.get());
+        } finally {
+            release.countDown();
         }
-        assertTrue(scheduler.isTerminated());
+
+        awaitJob(registered.get(0).jobId(), job -> job.status() == JobStatus.SUCCEEDED);
+        awaitJob(registered.get(1).jobId(), job -> job.status() == JobStatus.SUCCEEDED);
+        scheduler.dispatch();
+        for (final JobQueue.Registration target : registered) {
+            awaitJob(target.jobId(), job -> job.status() == JobStatus.SUCCEEDED);
+            assertEquals(
+                    "image:" + queue.findJob(target.jobId()).orElseThrow().prompt(),
+                    queue.findMonster(target.monsterId()).orElseThrow().image()
+            );
+        }
+        assertEquals(settings.concurrency(), maximum.get());
     }
 
     @Test
     void Generator가_막혀도_기한_복구는_진행하고_실제_실행_슬롯은_반환하지_않는다() throws Exception {
-        settings = new QueueSettings(settings.processingTimeout(), 3, settings.retryDelay(), 1,
-                settings.pollingInterval(), settings.recoveryInterval());
-        queue = new JobQueue(db.dataSource, clock, settings);
-        final var target = queue.request("blocked");
+        final JobQueue.Registration target = queue.request("blocked");
         final var started = new CountDownLatch(1);
         final var release = new CountDownLatch(1);
         final var returned = new CountDownLatch(1);
-        final var scheduler = new JobScheduler(queue, prompt -> {
+        generator.use(prompt -> {
             started.countDown();
             try {
                 if (!release.await(5, TimeUnit.SECONDS)) {
@@ -156,63 +194,64 @@ final class JobSchedulerTest {
             } finally {
                 returned.countDown();
             }
-        }, settings);
-        try (scheduler) {
-            try {
-                scheduler.start();
-                assertTrue(started.await(5, TimeUnit.SECONDS));
-                clock.advance(settings.processingTimeout());
+        });
 
-                final Job recovered = awaitJob(target.jobId(), job -> job.status() == JobStatus.PENDING);
+        try {
+            scheduler.dispatch();
+            assertTrue(started.await(5, TimeUnit.SECONDS));
+            clock.advance(settings.processingTimeout());
+            assertEquals(1, queue.recoverExpired());
 
-                assertEquals(1, recovered.attemptCount());
-                assertNull(recovered.claimToken());
-                assertEquals(1, returned.getCount(), "기한 만료는 Generator 실행을 중단하지 않는다.");
-                final var later = queue.request("waiting-for-slot");
-                scheduler.dispatch();
-                assertEquals(0, queue.findJob(later.jobId()).orElseThrow().attemptCount());
-            } finally {
-                release.countDown();
-            }
+            final Job recovered = queue.findJob(target.jobId()).orElseThrow();
+            assertEquals(JobStatus.PENDING, recovered.status());
+            assertEquals(1, recovered.attemptCount());
+            assertNull(recovered.claimToken());
+            assertEquals(1, returned.getCount(), "기한 만료는 Generator 실행을 중단하지 않는다.");
+            final JobQueue.Registration later = queue.request("waiting-for-slot");
+            scheduler.dispatch();
+            assertEquals(0, queue.findJob(later.jobId()).orElseThrow().attemptCount());
+        } finally {
+            release.countDown();
         }
-        assertTrue(scheduler.isTerminated());
+
+        assertTrue(returned.await(5, TimeUnit.SECONDS));
         assertNull(queue.findMonster(target.monsterId()).orElseThrow().image(), "만료된 실행 결과는 반영하면 안 된다.");
     }
 
     @Test
     void 선점_후_제출_거부는_재시도로_넘기고_실행_슬롯을_반환한다() {
-        final var target = queue.request("rejected");
+        final JobQueue.Registration target = queue.request("rejected");
         final var calls = new AtomicInteger();
-        final var executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1));
-        executor.shutdown();
-        final var scheduler = new JobScheduler(queue, prompt -> {
+        generator.use(prompt -> {
             calls.incrementAndGet();
             return "unexpected";
-        }, settings, executor);
-        try (scheduler) {
-            scheduler.dispatch();
-            final Job retry = queue.findJob(target.jobId()).orElseThrow();
-            assertEquals(JobStatus.PENDING, retry.status());
-            assertEquals(1, retry.attemptCount());
-            assertNull(retry.claimToken());
-            assertTrue(retry.lastError().contains("RejectedExecutionException"));
+        });
+        executionPool.shutdown();
 
-            clock.advance(settings.retryDelay());
-            scheduler.dispatch();
-            assertEquals(2, queue.findJob(target.jobId()).orElseThrow().attemptCount());
-            assertEquals(0, calls.get());
-        }
-        assertTrue(scheduler.isTerminated());
+        scheduler.dispatch();
+        final Job retry = queue.findJob(target.jobId()).orElseThrow();
+        assertEquals(JobStatus.PENDING, retry.status());
+        assertEquals(1, retry.attemptCount());
+        assertNull(retry.claimToken());
+        assertTrue(retry.lastError().contains("RejectedExecutionException"));
+
+        clock.advance(settings.retryDelay());
+        scheduler.dispatch();
+        assertEquals(2, queue.findJob(target.jobId()).orElseThrow().attemptCount());
+        assertEquals(0, calls.get());
     }
 
     @Test
-    void 종료는_반복_호출할_수_있고_재시작은_거부한다() {
-        final var scheduler = new JobScheduler(queue, prompt -> "image", settings);
+    void 종료는_반복_호출할_수_있고_이후_dispatch는_작업을_선점하지_않는다() {
+        final JobQueue.Registration target = queue.request("waiting");
+
         scheduler.close();
         scheduler.close();
+        scheduler.dispatch();
 
         assertTrue(scheduler.isTerminated());
-        assertThrows(IllegalStateException.class, scheduler::start);
+        assertEquals(JobStatus.PENDING, queue.findJob(target.jobId()).orElseThrow().status());
+        assertEquals(0, queue.findJob(target.jobId()).orElseThrow().attemptCount());
     }
 
     private Job awaitJob(final long jobId, final Predicate<Job> condition) throws InterruptedException {

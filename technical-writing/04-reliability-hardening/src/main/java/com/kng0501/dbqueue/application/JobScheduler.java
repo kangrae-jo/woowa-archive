@@ -1,67 +1,43 @@
 package com.kng0501.dbqueue.application;
 
-import com.kng0501.dbqueue.domain.ImageGenerator;
 import com.kng0501.dbqueue.domain.Job;
 import com.kng0501.dbqueue.domain.QueueSettings;
+import jakarta.annotation.PreDestroy;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 @Slf4j
-public final class JobScheduler implements AutoCloseable {
+@Component
+public class JobScheduler implements AutoCloseable {
+
     private final JobQueue queue;
     private final JobWorker worker;
     private final QueueSettings settings;
     private final ThreadPoolExecutor executions;
-    private final ScheduledExecutorService control;
     private final Semaphore slots;
-    private boolean started;
     private boolean closed;
 
-    public JobScheduler(final JobQueue queue, final ImageGenerator generator, final QueueSettings settings) {
-        this(queue, generator, settings, new ThreadPoolExecutor(
-                settings.concurrency(), settings.concurrency(), 0, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(settings.concurrency()),
-                Thread.ofPlatform().name("db-job-execution-", 0).factory(),
-                new ThreadPoolExecutor.AbortPolicy()
-        ));
-    }
-
-    // 작업 제출 거부를 결정적으로 검증하기 위한 실행기 주입 지점.
-    JobScheduler(final JobQueue queue, final ImageGenerator generator, final QueueSettings settings, final ThreadPoolExecutor executions) {
+    public JobScheduler(
+            final JobQueue queue,
+            final JobWorker worker,
+            final QueueSettings settings,
+            @Qualifier("jobExecutionExecutor") final ThreadPoolExecutor executions
+    ) {
         this.queue = queue;
-        this.worker = new JobWorker(queue, generator);
+        this.worker = worker;
         this.settings = settings;
         this.executions = executions;
         this.slots = new Semaphore(settings.concurrency());
-        this.control = Executors.newScheduledThreadPool(
-                2, Thread.ofPlatform().name("db-job-control-", 0).factory()
-        );
     }
 
-    public synchronized void start() {
-        if (started || closed) {
-            throw new IllegalStateException("Scheduler는 열린 상태에서 한 번만 시작할 수 있습니다.");
-        }
-        started = true;
-        control.scheduleWithFixedDelay(
-                () -> runSafely("dispatch", this::dispatch),
-                0, settings.pollingInterval().toMillis(), TimeUnit.MILLISECONDS
-        );
-        control.scheduleWithFixedDelay(
-                () -> runSafely("recovery", queue::recoverExpired),
-                0, settings.recoveryInterval().toMillis(), TimeUnit.MILLISECONDS
-        );
-    }
-
-    synchronized void dispatch() {
+    public synchronized void dispatch() {
         if (closed) {
             return;
         }
@@ -78,7 +54,7 @@ public final class JobScheduler implements AutoCloseable {
                 }
                 final Optional<Job> selected = queue.tryClaim(candidate.get());
                 if (selected.isEmpty()) {
-                    return; // 경합에서 지면 다음 Polling까지 기다린다.
+                    return;
                 }
                 claim = selected.get();
                 executions.execute(new ClaimedTask(claim));
@@ -97,15 +73,7 @@ public final class JobScheduler implements AutoCloseable {
         }
     }
 
-    private void runSafely(final String operation, final Runnable action) {
-        try {
-            action.run();
-        } catch (final RuntimeException failure) {
-            log.error("operation={} job_id=unassigned attempt_count=unknown cause={}",
-                    operation, failure.toString(), failure);
-        }
-    }
-
+    @PreDestroy
     @Override
     public void close() {
         synchronized (this) {
@@ -114,16 +82,14 @@ public final class JobScheduler implements AutoCloseable {
             }
             closed = true;
         }
-        control.shutdownNow();
         for (final Runnable task : executions.shutdownNow()) {
             ((ClaimedTask) task).cancelBeforeStart();
         }
-        awaitTermination(control);
         awaitTermination(executions);
     }
 
-    boolean isTerminated() {
-        return control.isTerminated() && executions.isTerminated();
+    public boolean isTerminated() {
+        return executions.isTerminated();
     }
 
     private static void awaitTermination(final ExecutorService executor) {
@@ -138,6 +104,7 @@ public final class JobScheduler implements AutoCloseable {
     }
 
     private final class ClaimedTask implements Runnable {
+
         private final Job claim;
         private final AtomicBoolean accepted = new AtomicBoolean();
 

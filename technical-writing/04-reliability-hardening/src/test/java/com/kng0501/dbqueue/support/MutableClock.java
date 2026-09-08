@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class MutableClock extends Clock {
@@ -21,7 +22,15 @@ public final class MutableClock extends Clock {
     }
 
     public void advance(final Duration duration) {
-        time.updateAndGet(now -> now.plus(duration));
+        time.updateAndGet(now -> now.plus(duration).truncatedTo(ChronoUnit.MICROS));
+    }
+
+    public void set(final Instant instant) {
+        time.set(instant.truncatedTo(ChronoUnit.MICROS));
+    }
+
+    public void reset() {
+        set(Instant.parse("2026-09-06T00:00:00Z"));
     }
 
     @Override
@@ -36,6 +45,6 @@ public final class MutableClock extends Clock {
 
     @Override
     public Instant instant() {
-        return time.get();
+        return time.get().truncatedTo(ChronoUnit.MICROS);
     }
 }

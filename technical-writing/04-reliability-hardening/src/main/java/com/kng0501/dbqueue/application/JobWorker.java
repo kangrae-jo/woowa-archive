@@ -3,9 +3,11 @@ package com.kng0501.dbqueue.application;
 import com.kng0501.dbqueue.domain.ImageGenerator;
 import com.kng0501.dbqueue.domain.Job;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 @Slf4j
-public final class JobWorker {
+@Component
+public class JobWorker {
     private final JobQueue queue;
     private final ImageGenerator generator;
 

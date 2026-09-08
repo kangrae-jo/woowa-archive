@@ -1,0 +1,7 @@
+package com.kng0501.dbqueue.persistence;
+
+import com.kng0501.dbqueue.persistence.entity.QueueMonsterEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface QueueMonsterJpaRepository extends JpaRepository<QueueMonsterEntity, Long> {
+}
