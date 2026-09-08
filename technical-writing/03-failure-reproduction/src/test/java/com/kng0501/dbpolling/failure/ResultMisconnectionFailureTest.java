@@ -8,40 +8,52 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.kng0501.dbpolling.application.DbPollingWorker;
 import com.kng0501.dbpolling.application.ImageGenerationService;
 import com.kng0501.dbpolling.domain.Monster;
-import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
-import com.kng0501.dbpolling.persistence.JdbcImageGenerationRequestRepository;
-import com.kng0501.dbpolling.persistence.JdbcMonsterRepository;
 import com.kng0501.dbpolling.persistence.MonsterRepository;
-import com.kng0501.dbpolling.support.TestDatabase;
+import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 
+@BaselineIntegrationTest
 @Tag("failure-reproduction")
 final class ResultMisconnectionFailureTest {
 
-    private MonsterRepository monsterRepository;
-    private ImageGenerationRequestRepository requestRepository;
-    private ImageGenerationService imageGenerationService;
+    private final MonsterRepository monsterRepository;
+    private final ImageGenerationService imageGenerationService;
+    private final DbPollingWorker worker;
+    private final JdbcTemplate jdbc;
+
+    @Autowired
+    ResultMisconnectionFailureTest(
+            final MonsterRepository monsterRepository,
+            final ImageGenerationService imageGenerationService,
+            final DbPollingWorker worker,
+            final JdbcTemplate jdbc
+    ) {
+        this.monsterRepository = monsterRepository;
+        this.imageGenerationService = imageGenerationService;
+        this.worker = worker;
+        this.jdbc = jdbc;
+    }
 
     @BeforeEach
     void setUp() {
-        final var dataSource = TestDatabase.createInitializedDataSource();
-        monsterRepository = new JdbcMonsterRepository(dataSource);
-        requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
-        imageGenerationService = new ImageGenerationService(monsterRepository, requestRepository);
+        MySqlTestDatabase.cleanBaseline(jdbc);
+    }
+
+    @AfterEach
+    void tearDown() {
+        MySqlTestDatabase.cleanBaseline(jdbc);
     }
 
     @Test
     void 생성_결과는_요청한_monster에만_연결된다() {
         final long unrelatedMonsterId = monsterRepository.save("unrelated");
         final long targetMonsterId = imageGenerationService.request("blue dragon");
-        final var worker = new DbPollingWorker(
-                requestRepository,
-                monsterRepository,
-                prompt -> "image:" + prompt
-        );
-
         assertTrue(worker.pollOnce());
 
         final Monster unrelatedMonster = monsterRepository.findById(unrelatedMonsterId).orElseThrow();

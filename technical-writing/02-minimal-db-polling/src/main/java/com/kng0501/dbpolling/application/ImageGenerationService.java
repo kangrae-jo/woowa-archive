@@ -2,8 +2,10 @@ package com.kng0501.dbpolling.application;
 
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
 import com.kng0501.dbpolling.persistence.MonsterRepository;
+import org.springframework.stereotype.Service;
 
-public final class ImageGenerationService {
+@Service
+public class ImageGenerationService {
 
     private final MonsterRepository monsterRepository;
     private final ImageGenerationRequestRepository requestRepository;

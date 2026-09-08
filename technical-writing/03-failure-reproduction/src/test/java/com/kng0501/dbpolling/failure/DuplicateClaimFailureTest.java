@@ -8,10 +8,9 @@ import com.kng0501.dbpolling.application.ImageGenerationService;
 import com.kng0501.dbpolling.domain.ImageGenerationRequest;
 import com.kng0501.dbpolling.domain.ImageGenerator;
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
-import com.kng0501.dbpolling.persistence.JdbcImageGenerationRequestRepository;
-import com.kng0501.dbpolling.persistence.JdbcMonsterRepository;
 import com.kng0501.dbpolling.persistence.MonsterRepository;
-import com.kng0501.dbpolling.support.TestDatabase;
+import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
 import java.util.Optional;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -21,23 +20,43 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 
+@BaselineIntegrationTest
 @Tag("failure-reproduction")
 final class DuplicateClaimFailureTest {
 
-    private MonsterRepository monsterRepository;
-    private ImageGenerationRequestRepository requestRepository;
-    private ImageGenerationService imageGenerationService;
+    private final MonsterRepository monsterRepository;
+    private final ImageGenerationRequestRepository requestRepository;
+    private final ImageGenerationService imageGenerationService;
+    private final JdbcTemplate jdbc;
+
+    @Autowired
+    DuplicateClaimFailureTest(
+            final MonsterRepository monsterRepository,
+            final ImageGenerationRequestRepository requestRepository,
+            final ImageGenerationService imageGenerationService,
+            final JdbcTemplate jdbc
+    ) {
+        this.monsterRepository = monsterRepository;
+        this.requestRepository = requestRepository;
+        this.imageGenerationService = imageGenerationService;
+        this.jdbc = jdbc;
+    }
 
     @BeforeEach
     void setUp() {
-        final var dataSource = TestDatabase.createInitializedDataSource();
-        monsterRepository = new JdbcMonsterRepository(dataSource);
-        requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
-        imageGenerationService = new ImageGenerationService(monsterRepository, requestRepository);
+        MySqlTestDatabase.cleanBaseline(jdbc);
+    }
+
+    @AfterEach
+    void tearDown() {
+        MySqlTestDatabase.cleanBaseline(jdbc);
     }
 
     @Test

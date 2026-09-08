@@ -5,41 +5,59 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.kng0501.dbpolling.application.ImageGenerationService;
-import com.kng0501.dbpolling.domain.ImageGenerationRequest;
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
-import com.kng0501.dbpolling.persistence.JdbcImageGenerationRequestRepository;
-import com.kng0501.dbpolling.persistence.JdbcMonsterRepository;
-import com.kng0501.dbpolling.support.TestDatabase;
-import java.util.Optional;
-import javax.sql.DataSource;
+import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+@BaselineIntegrationTest
 @Tag("failure-reproduction")
 final class RequestRegistrationAtomicityFailureTest {
 
-    private DataSource dataSource;
-    private ImageGenerationRequestRepository requestRepository;
+    private final ImageGenerationService service;
+    private final ImageGenerationRequestRepository requestRepository;
+    private final JdbcTemplate jdbc;
+
+    @Autowired
+    RequestRegistrationAtomicityFailureTest(
+            final ImageGenerationService service,
+            final ImageGenerationRequestRepository requestRepository,
+            final JdbcTemplate jdbc
+    ) {
+        this.service = service;
+        this.requestRepository = requestRepository;
+        this.jdbc = jdbc;
+    }
 
     @BeforeEach
     void setUp() {
-        dataSource = TestDatabase.createInitializedDataSource();
-        requestRepository = new JdbcImageGenerationRequestRepository(dataSource);
+        MySqlTestDatabase.dropCheckIfExists(jdbc, "image_generation_request", "reject_baseline_enqueue");
+        MySqlTestDatabase.cleanBaseline(jdbc);
+    }
+
+    @AfterEach
+    void tearDown() {
+        MySqlTestDatabase.dropCheckIfExists(jdbc, "image_generation_request", "reject_baseline_enqueue");
+        MySqlTestDatabase.cleanBaseline(jdbc);
     }
 
     @Test
     void monster와_이미지_생성_job은_함께_저장되거나_함께_저장되지_않는다() {
-        final var service = new ImageGenerationService(
-                new JdbcMonsterRepository(dataSource),
-                new EnqueueFailingRequestRepository(requestRepository)
-        );
+        jdbc.execute("ALTER TABLE image_generation_request ADD CONSTRAINT reject_baseline_enqueue "
+                + "CHECK (prompt <> 'enqueue-fail')");
+        try {
+            assertThrows(DataIntegrityViolationException.class, () -> service.request("enqueue-fail"));
+        } finally {
+            MySqlTestDatabase.dropCheckIfExists(jdbc, "image_generation_request", "reject_baseline_enqueue");
+        }
 
-        assertThrows(SimulatedEnqueueFailureException.class, () -> service.request("blue dragon"));
-
-        final Integer monsterCount = new JdbcTemplate(dataSource)
-                .queryForObject("SELECT COUNT(*) FROM monster", Integer.class);
+        final Integer monsterCount = jdbc.queryForObject("SELECT COUNT(*) FROM monster", Integer.class);
         assertAll(
                 () -> assertEquals(
                         0,
@@ -54,36 +72,4 @@ final class RequestRegistrationAtomicityFailureTest {
         );
     }
 
-    private static final class EnqueueFailingRequestRepository
-            implements ImageGenerationRequestRepository {
-
-        private final ImageGenerationRequestRepository delegate;
-
-        private EnqueueFailingRequestRepository(final ImageGenerationRequestRepository delegate) {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public long enqueue(final String prompt) {
-            throw new SimulatedEnqueueFailureException();
-        }
-
-        @Override
-        public Optional<ImageGenerationRequest> findOldest() {
-            return delegate.findOldest();
-        }
-
-        @Override
-        public void deleteById(final long requestId) {
-            delegate.deleteById(requestId);
-        }
-
-        @Override
-        public long count() {
-            return delegate.count();
-        }
-    }
-
-    private static final class SimulatedEnqueueFailureException extends RuntimeException {
-    }
 }
