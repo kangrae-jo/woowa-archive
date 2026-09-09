@@ -1,48 +1,44 @@
 package com.kng0501.dbpolling.failure;
 
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.clean02;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.kng0501.dbpolling.application.DbPollingScheduler;
-import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
-import com.kng0501.dbpolling.persistence.MonsterRepository;
-import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
-import com.kng0501.technicalwriting.testsupport.BaselineJobRegistrationFixture;
-import com.kng0501.technicalwriting.testsupport.BaselineTestImageGenerator;
-import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
+import com.kng0501.dbpolling.worker.TestImageGenerator;
+import com.kng0501.dbpolling.worker.WorkerIntegrationTest;
+import com.kng0501.dbpolling.worker.WorkerTestData;
+import com.kng0501.dbpolling.worker.application.DbPollingScheduler;
+import com.kng0501.dbpolling.worker.persistence.jpa.ImageGenerationRequestJpaRepository;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 
-@BaselineIntegrationTest
+@WorkerIntegrationTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Tag("failure-reproduction")
 final class SchedulerContinuityFailureTest {
 
-    private final ImageGenerationRequestRepository requestRepository;
-    private final MonsterRepository monsterRepository;
+    private final ImageGenerationRequestJpaRepository requests;
     private final DbPollingScheduler scheduler;
-    private final BaselineTestImageGenerator generator;
+    private final TestImageGenerator generator;
     private final JdbcTemplate jdbc;
 
     @Autowired
     SchedulerContinuityFailureTest(
-            final ImageGenerationRequestRepository requestRepository,
-            final MonsterRepository monsterRepository,
+            final ImageGenerationRequestJpaRepository requests,
             final DbPollingScheduler scheduler,
-            final BaselineTestImageGenerator generator,
+            final TestImageGenerator generator,
             final JdbcTemplate jdbc
     ) {
-        this.requestRepository = requestRepository;
-        this.monsterRepository = monsterRepository;
+        this.requests = requests;
         this.scheduler = scheduler;
         this.generator = generator;
         this.jdbc = jdbc;
@@ -50,22 +46,22 @@ final class SchedulerContinuityFailureTest {
 
     @BeforeEach
     void setUp() {
-        MySqlTestDatabase.cleanBaseline(jdbc);
+        clean02(jdbc);
         generator.reset();
     }
 
     @AfterEach
     void tearDown() {
         scheduler.close();
-        MySqlTestDatabase.cleanBaseline(jdbc);
+        clean02(jdbc);
         generator.reset();
     }
 
     @Test
     void 한_작업의_실패가_이후_polling을_중단하지_않는다() throws InterruptedException {
-        final var firstAttempted = new CountDownLatch(1);
-        final var laterJobProcessed = new CountDownLatch(1);
-        final var invocationCount = new AtomicInteger();
+        final CountDownLatch firstAttempted = new CountDownLatch(1);
+        final CountDownLatch laterJobProcessed = new CountDownLatch(1);
+        final AtomicInteger invocationCount = new AtomicInteger();
         generator.use(prompt -> {
             if (invocationCount.incrementAndGet() == 1) {
                 firstAttempted.countDown();
@@ -75,14 +71,14 @@ final class SchedulerContinuityFailureTest {
             return "image:" + prompt;
         });
 
-        BaselineJobRegistrationFixture.register(monsterRepository, requestRepository, "first request");
+        WorkerTestData.register(jdbc, "first request");
         scheduler.start();
         assertTrue(
                 firstAttempted.await(2, TimeUnit.SECONDS),
                 "첫 번째 작업이 제한 시간 안에 실행되지 않아 테스트를 준비할 수 없습니다."
         );
 
-        BaselineJobRegistrationFixture.register(monsterRepository, requestRepository, "later request");
+        WorkerTestData.register(jdbc, "later request");
         final boolean processed = laterJobProcessed.await(1, TimeUnit.SECONDS);
 
         assertAll(
@@ -92,7 +88,7 @@ final class SchedulerContinuityFailureTest {
                 ),
                 () -> assertEquals(
                         0,
-                        requestRepository.count(),
+                        requests.count(),
                         "이후 등록한 작업이 처리되지 않고 큐에 남았습니다."
                 )
         );

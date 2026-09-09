@@ -28,7 +28,7 @@ server:
 image-generator:
   delay: ${TECHNICAL_WRITING_IMAGE_GENERATOR_DELAY:5s}
 
-baseline:
+db-polling-worker:
   polling-interval: 100ms
   scheduling-enabled: true
 

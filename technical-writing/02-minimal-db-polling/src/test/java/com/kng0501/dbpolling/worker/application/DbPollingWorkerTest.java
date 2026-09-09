@@ -1,24 +1,22 @@
-package com.kng0501.dbpolling.failure;
+package com.kng0501.dbpolling.worker.application;
 
 import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.clean02;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kng0501.dbpolling.worker.TestImageGenerator;
 import com.kng0501.dbpolling.worker.WorkerIntegrationTest;
 import com.kng0501.dbpolling.worker.WorkerTestData;
-import com.kng0501.dbpolling.worker.application.DbPollingWorker;
 import com.kng0501.dbpolling.worker.persistence.jpa.ImageGenerationRequestJpaRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @WorkerIntegrationTest
-@Tag("failure-reproduction")
-final class WorkerTerminationFailureTest {
+final class DbPollingWorkerTest {
 
     private final ImageGenerationRequestJpaRepository requests;
     private final DbPollingWorker worker;
@@ -26,7 +24,7 @@ final class WorkerTerminationFailureTest {
     private final JdbcTemplate jdbc;
 
     @Autowired
-    WorkerTerminationFailureTest(
+    DbPollingWorkerTest(
             final ImageGenerationRequestJpaRepository requests,
             final DbPollingWorker worker,
             final TestImageGenerator generator,
@@ -51,21 +49,22 @@ final class WorkerTerminationFailureTest {
     }
 
     @Test
-    void 워커가_종료되어도_처리중인_작업은_유실되지_않는다() {
-        WorkerTestData.register(jdbc, "blue dragon");
-        generator.use(prompt -> {
-            throw new SimulatedWorkerStopException();
-        });
+    void 요청_한_건을_조회해_이미지를_생성한다() {
+        final long monsterId = WorkerTestData.register(jdbc, "blue dragon");
 
-        assertThrows(SimulatedWorkerStopException.class, worker::pollOnce);
+        final boolean processed = worker.pollOnce();
 
-        assertEquals(
-                1,
-                requests.count(),
-                "워커가 종료돼도 완료되지 않은 작업 행은 남아 있어야 합니다."
-        );
+        assertTrue(processed);
+        assertEquals(0, requests.count());
+        assertEquals("image:blue dragon", imageOf(monsterId));
     }
 
-    private static final class SimulatedWorkerStopException extends RuntimeException {
+    @Test
+    void 처리할_요청이_없으면_false를_반환한다() {
+        assertFalse(worker.pollOnce());
+    }
+
+    private String imageOf(final long monsterId) {
+        return jdbc.queryForObject("SELECT image FROM monster WHERE id = ?", String.class, monsterId);
     }
 }

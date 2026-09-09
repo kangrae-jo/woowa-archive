@@ -1,17 +1,15 @@
 package com.kng0501.dbpolling.failure;
 
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.clean02;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.kng0501.dbpolling.application.DbPollingWorker;
-import com.kng0501.dbpolling.domain.ImageGenerationRequest;
-import com.kng0501.dbpolling.domain.ImageGenerator;
-import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
-import com.kng0501.dbpolling.persistence.MonsterRepository;
-import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
-import com.kng0501.technicalwriting.testsupport.BaselineJobRegistrationFixture;
-import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
-import java.util.Optional;
+import com.kng0501.dbpolling.worker.WorkerIntegrationTest;
+import com.kng0501.dbpolling.worker.WorkerTestData;
+import com.kng0501.dbpolling.worker.application.DbPollingWorker;
+import com.kng0501.dbpolling.worker.domain.ImageGenerator;
+import com.kng0501.dbpolling.worker.persistence.ImageResultUpdater;
+import com.kng0501.dbpolling.worker.persistence.jpa.ImageGenerationRequestJpaRepository;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
@@ -27,49 +25,47 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@BaselineIntegrationTest
+@WorkerIntegrationTest
 @Tag("failure-reproduction")
 final class DuplicateClaimFailureTest {
 
-    private final MonsterRepository monsterRepository;
-    private final ImageGenerationRequestRepository requestRepository;
+    private final ImageGenerationRequestJpaRepository requests;
+    private final ImageResultUpdater results;
     private final JdbcTemplate jdbc;
 
     @Autowired
     DuplicateClaimFailureTest(
-            final MonsterRepository monsterRepository,
-            final ImageGenerationRequestRepository requestRepository,
+            final ImageGenerationRequestJpaRepository requests,
+            final ImageResultUpdater results,
             final JdbcTemplate jdbc
     ) {
-        this.monsterRepository = monsterRepository;
-        this.requestRepository = requestRepository;
+        this.requests = requests;
+        this.results = results;
         this.jdbc = jdbc;
     }
 
     @BeforeEach
     void setUp() {
-        MySqlTestDatabase.cleanBaseline(jdbc);
+        clean02(jdbc);
     }
 
     @AfterEach
     void tearDown() {
-        MySqlTestDatabase.cleanBaseline(jdbc);
+        clean02(jdbc);
     }
 
     @Test
     void 두_워커는_같은_작업을_한_번만_처리한다() throws Exception {
-        BaselineJobRegistrationFixture.register(monsterRepository, requestRepository, "blue dragon");
-        final var synchronizedRepository = new BarrierRequestRepository(
-                requestRepository,
-                new CyclicBarrier(2)
-        );
-        final var generationCount = new AtomicInteger();
+        WorkerTestData.register(jdbc, "blue dragon");
+        final CyclicBarrier selectedByBothWorkers = new CyclicBarrier(2);
+        final AtomicInteger generationCount = new AtomicInteger();
         final ImageGenerator generator = prompt -> {
             generationCount.incrementAndGet();
             return "image:" + prompt;
         };
-        final var firstWorker = new DbPollingWorker(synchronizedRepository, monsterRepository, generator);
-        final var secondWorker = new DbPollingWorker(synchronizedRepository, monsterRepository, generator);
+        final Runnable afterSelection = () -> awaitSelectionOfBothWorkers(selectedByBothWorkers);
+        final DbPollingWorker firstWorker = new DbPollingWorker(requests, results, generator, afterSelection);
+        final DbPollingWorker secondWorker = new DbPollingWorker(requests, results, generator, afterSelection);
 
         final ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
@@ -104,50 +100,14 @@ final class DuplicateClaimFailureTest {
         return (firstResult ? 1 : 0) + (secondResult ? 1 : 0);
     }
 
-    private static final class BarrierRequestRepository implements ImageGenerationRequestRepository {
-
-        private final ImageGenerationRequestRepository delegate;
-        private final CyclicBarrier barrier;
-
-        private BarrierRequestRepository(
-                final ImageGenerationRequestRepository delegate,
-                final CyclicBarrier barrier
-        ) {
-            this.delegate = delegate;
-            this.barrier = barrier;
-        }
-
-        @Override
-        public long enqueue(final String prompt) {
-            return delegate.enqueue(prompt);
-        }
-
-        @Override
-        public Optional<ImageGenerationRequest> findOldest() {
-            final Optional<ImageGenerationRequest> selected = delegate.findOldest();
-            awaitSelectionOfBothWorkers();
-            return selected;
-        }
-
-        @Override
-        public void deleteById(final long requestId) {
-            delegate.deleteById(requestId);
-        }
-
-        @Override
-        public long count() {
-            return delegate.count();
-        }
-
-        private void awaitSelectionOfBothWorkers() {
-            try {
-                barrier.await(1, TimeUnit.SECONDS);
-            } catch (final InterruptedException exception) {
-                Thread.currentThread().interrupt();
-                throw new AssertionError("작업 선택 동기화 중 스레드가 중단됐습니다.", exception);
-            } catch (final BrokenBarrierException | TimeoutException exception) {
-                throw new AssertionError("두 워커가 제한 시간 안에 작업을 선택하지 못했습니다.", exception);
-            }
+    private static void awaitSelectionOfBothWorkers(final CyclicBarrier barrier) {
+        try {
+            barrier.await(1, TimeUnit.SECONDS);
+        } catch (final InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("작업 선택 동기화 중 스레드가 중단됐습니다.", exception);
+        } catch (final BrokenBarrierException | TimeoutException exception) {
+            throw new AssertionError("두 워커가 제한 시간 안에 작업을 선택하지 못했습니다.", exception);
         }
     }
 }

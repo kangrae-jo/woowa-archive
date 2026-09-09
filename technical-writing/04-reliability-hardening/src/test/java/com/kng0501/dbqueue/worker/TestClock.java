@@ -1,0 +1,50 @@
+package com.kng0501.dbqueue.worker;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+public final class TestClock extends Clock {
+    private final AtomicReference<Instant> time;
+    private final ZoneId zone;
+
+    public TestClock() {
+        this(new AtomicReference<>(Instant.parse("2026-09-06T00:00:00Z")), ZoneOffset.UTC);
+    }
+
+    private TestClock(final AtomicReference<Instant> time, final ZoneId zone) {
+        this.time = time;
+        this.zone = zone;
+    }
+
+    public void advance(final Duration duration) {
+        time.updateAndGet(now -> now.plus(duration).truncatedTo(ChronoUnit.MICROS));
+    }
+
+    public void set(final Instant instant) {
+        time.set(instant.truncatedTo(ChronoUnit.MICROS));
+    }
+
+    public void reset() {
+        set(Instant.parse("2026-09-06T00:00:00Z"));
+    }
+
+    @Override
+    public ZoneId getZone() {
+        return zone;
+    }
+
+    @Override
+    public Clock withZone(final ZoneId zone) {
+        return new TestClock(time, zone);
+    }
+
+    @Override
+    public Instant instant() {
+        return time.get().truncatedTo(ChronoUnit.MICROS);
+    }
+}

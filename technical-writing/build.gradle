@@ -73,35 +73,35 @@ tasks.withType(JavaExec).configureEach {
 }
 
 springBoot {
-    mainClass = 'com.kng0501.dbpolling.server.BaselineWebServerApplication'
+    mainClass = 'com.kng0501.dbpolling.server.WebServerApplication'
 }
 
-tasks.register('runBaselineWebServer', JavaExec) {
+tasks.register('run02WebServer', JavaExec) {
     group = 'application'
-    description = '02단계 Baseline 웹 서버를 별도 JVM으로 실행합니다.'
+    description = '02단계 웹 서버를 별도 JVM으로 실행합니다.'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'com.kng0501.dbpolling.server.BaselineWebServerApplication'
+    mainClass = 'com.kng0501.dbpolling.server.WebServerApplication'
 }
 
-tasks.register('runBaselineImageWorker', JavaExec) {
+tasks.register('run02ImageWorker', JavaExec) {
     group = 'application'
-    description = '02단계 Baseline 이미지 워커를 별도 JVM으로 실행합니다.'
+    description = '02단계 이미지 워커를 별도 JVM으로 실행합니다.'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'com.kng0501.dbpolling.worker.BaselineImageWorkerApplication'
+    mainClass = 'com.kng0501.dbpolling.worker.ImageWorkerApplication'
 }
 
-tasks.register('runHardenedWebServer', JavaExec) {
+tasks.register('run04WebServer', JavaExec) {
     group = 'application'
-    description = '04단계 Hardened 웹 서버를 별도 JVM으로 실행합니다.'
+    description = '04단계 웹 서버를 별도 JVM으로 실행합니다.'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'com.kng0501.dbqueue.server.HardenedWebServerApplication'
+    mainClass = 'com.kng0501.dbqueue.server.WebServerApplication'
 }
 
-tasks.register('runHardenedImageWorker', JavaExec) {
+tasks.register('run04ImageWorker', JavaExec) {
     group = 'application'
-    description = '04단계 Hardened 이미지 워커를 별도 JVM으로 실행합니다.'
+    description = '04단계 이미지 워커를 별도 JVM으로 실행합니다.'
     classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'com.kng0501.dbqueue.worker.HardenedImageWorkerApplication'
+    mainClass = 'com.kng0501.dbqueue.worker.ImageWorkerApplication'
 }
 
 test {

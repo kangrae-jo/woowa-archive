@@ -1,13 +1,14 @@
 package com.kng0501.dbpolling.failure;
 
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.clean02;
+import static com.kng0501.technicalwriting.testsupport.MySqlTestDatabase.dropCheckIfExists;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.kng0501.dbpolling.application.ImageGenerationService;
-import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
-import com.kng0501.technicalwriting.testsupport.BaselineWebIntegrationTest;
-import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
+import com.kng0501.dbpolling.server.ServerIntegrationTest;
+import com.kng0501.dbpolling.server.application.ImageGenerationService;
+import com.kng0501.dbpolling.server.persistence.jpa.ImageGenerationRequestJpaRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -16,45 +17,45 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@BaselineWebIntegrationTest
+@ServerIntegrationTest
 @Tag("failure-reproduction")
 final class RequestRegistrationAtomicityFailureTest {
 
     private final ImageGenerationService service;
-    private final ImageGenerationRequestRepository requestRepository;
+    private final ImageGenerationRequestJpaRepository requests;
     private final JdbcTemplate jdbc;
 
     @Autowired
     RequestRegistrationAtomicityFailureTest(
             final ImageGenerationService service,
-            final ImageGenerationRequestRepository requestRepository,
+            final ImageGenerationRequestJpaRepository requests,
             final JdbcTemplate jdbc
     ) {
         this.service = service;
-        this.requestRepository = requestRepository;
+        this.requests = requests;
         this.jdbc = jdbc;
     }
 
     @BeforeEach
     void setUp() {
-        MySqlTestDatabase.dropCheckIfExists(jdbc, "image_generation_request", "reject_baseline_enqueue");
-        MySqlTestDatabase.cleanBaseline(jdbc);
+        dropCheckIfExists(jdbc, "image_generation_request", "reject_enqueue");
+        clean02(jdbc);
     }
 
     @AfterEach
     void tearDown() {
-        MySqlTestDatabase.dropCheckIfExists(jdbc, "image_generation_request", "reject_baseline_enqueue");
-        MySqlTestDatabase.cleanBaseline(jdbc);
+        dropCheckIfExists(jdbc, "image_generation_request", "reject_enqueue");
+        clean02(jdbc);
     }
 
     @Test
     void monster와_이미지_생성_job은_함께_저장되거나_함께_저장되지_않는다() {
-        jdbc.execute("ALTER TABLE image_generation_request ADD CONSTRAINT reject_baseline_enqueue "
+        jdbc.execute("ALTER TABLE image_generation_request ADD CONSTRAINT reject_enqueue "
                 + "CHECK (prompt <> 'enqueue-fail')");
         try {
             assertThrows(DataIntegrityViolationException.class, () -> service.request("enqueue-fail"));
         } finally {
-            MySqlTestDatabase.dropCheckIfExists(jdbc, "image_generation_request", "reject_baseline_enqueue");
+            dropCheckIfExists(jdbc, "image_generation_request", "reject_enqueue");
         }
 
         final Integer monsterCount = jdbc.queryForObject("SELECT COUNT(*) FROM monster", Integer.class);
@@ -66,10 +67,9 @@ final class RequestRegistrationAtomicityFailureTest {
                 ),
                 () -> assertEquals(
                         0,
-                        requestRepository.count(),
+                        requests.count(),
                         "요청 등록 실패 후 image generation job이 남지 않아야 합니다."
                 )
         );
     }
-
 }

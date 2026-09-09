@@ -10,12 +10,12 @@ public final class MySqlTestDatabase {
     private MySqlTestDatabase() {
     }
 
-    public static void cleanBaseline(final JdbcTemplate jdbc) {
+    public static void clean02(final JdbcTemplate jdbc) {
         jdbc.execute("TRUNCATE TABLE image_generation_request");
         jdbc.execute("TRUNCATE TABLE monster");
     }
 
-    public static void cleanHardened(final JdbcTemplate jdbc) {
+    public static void clean04(final JdbcTemplate jdbc) {
         jdbc.execute((ConnectionCallback<Void>) connection -> {
             execute(connection, "SET FOREIGN_KEY_CHECKS = 0");
             try {
