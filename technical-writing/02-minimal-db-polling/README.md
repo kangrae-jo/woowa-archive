@@ -2,7 +2,7 @@
 
 ## 결론 🧭
 
-**채택:** 정상 상황에서 요청 등록부터 결과 반영까지 동작하는 최소 DB Polling 구현이다. `BaselineWebServerApplication`과 `BaselineImageWorkerApplication`은 별도 JVM이며 MySQL만 통해 협력한다.
+**채택:** 정상 상황에서 요청 등록부터 결과 반영까지 동작하는 최소 DB Polling 구현이다. `com.kng0501.dbpolling.server.WebServerApplication`과 `com.kng0501.dbpolling.worker.ImageWorkerApplication`은 별도 JVM이며 MySQL만 통해 협력한다.
 
 **유지:** 이 단계는 장애와 동시 실행을 고려하지 않은 기준 구현이다. JPA 전환은 했지만 등록 원자성, 작업 상태, 원자적 선점, 타임아웃, 재시도, 멱등성을 추가하지 않는다.
 
@@ -11,9 +11,9 @@
 ```mermaid
 sequenceDiagram
     participant C as Client
-    participant W as BaselineWebServerApplication
+    participant W as server.WebServerApplication
     participant DB as MySQL
-    participant I as BaselineImageWorkerApplication
+    participant I as worker.ImageWorkerApplication
 
     C->>W: POST /jobs
     W->>DB: Monster 저장
@@ -26,10 +26,10 @@ sequenceDiagram
 
 | Application | 등록 Bean | 등록하지 않는 Bean |
 | --- | --- | --- |
-| `BaselineWebServerApplication` | Controller, `ImageGenerationService`, baseline JPA Entity·Repository | `DbPollingWorker`, `DbPollingScheduler`, `ImageGenerator` |
-| `BaselineImageWorkerApplication` | `DbPollingWorker`, `DbPollingScheduler`, `ImageGenerator`, baseline JPA Entity·Repository | Controller, HTTP 서버 |
+| `server.WebServerApplication` | Controller, `ImageGenerationService`, Server 전용 JPA Entity·Repository | `DbPollingWorker`, `DbPollingScheduler`, `ImageGenerator` |
+| `worker.ImageWorkerApplication` | `DbPollingWorker`, `DbPollingScheduler`, `ImageGenerator`, Worker 전용 요청 Entity·Repository | Controller, HTTP 서버 |
 
-워커는 `WebApplicationType.NONE`으로 시작한다. Spring Profile로 역할을 고르지 않는다.
+워커는 `WebApplicationType.NONE`으로 시작한다. Spring Profile로 역할을 고르지 않는다. Server와 Worker의 Java 계약은 없고, `monster`, `image_generation_request` 스키마가 두 프로세스의 계약이다. Worker는 `Monster` 객체를 가지지 않으며 요청 ID를 Monster ID처럼 사용해 native UPDATE를 수행한다.
 
 ## 정상 처리 흐름 🔄
 
@@ -43,10 +43,10 @@ sequenceDiagram
 
 ```bash
 # 터미널 1
-./gradlew runBaselineWebServer
+./gradlew run02WebServer
 
 # 터미널 2
-./gradlew runBaselineImageWorker
+./gradlew run02ImageWorker
 ```
 
 기본 모의 Generator는 `image:{prompt}`를 반환한다. 예시 요청은 두 단계 비교에 같은 `blue dragon`을 사용한다.
@@ -63,20 +63,19 @@ curl -i http://127.0.0.1:8080/monsters/1
 
 | 역할 | 구현 |
 | --- | --- |
-| Entity | `BaselineMonsterEntity`, `BaselineImageGenerationRequestEntity` |
-| Spring Data Repository | `BaselineMonsterJpaRepository`, `BaselineImageGenerationRequestJpaRepository` |
-| Port adapter | `JpaMonsterRepository`, `JpaImageGenerationRequestRepository` |
+| Server Entity·Repository | `server.persistence.entity.MonsterEntity`, `server.persistence.entity.ImageGenerationRequestEntity`, `server.persistence.jpa.*` |
+| Worker Entity·Repository | `worker.persistence.entity.ImageGenerationRequestEntity`, `worker.persistence.jpa.ImageGenerationRequestJpaRepository` |
 | 등록 서비스 | `ImageGenerationService` |
 | Polling | `DbPollingWorker`, `DbPollingScheduler` |
-| 스키마 | [`db/baseline/schema.sql`](./src/main/resources/db/baseline/schema.sql) |
+| 스키마 | [`db/02/schema.sql`](./src/main/resources/db/02/schema.sql) |
 
-Entity는 MySQL `AUTO_INCREMENT`에 맞춘 `IDENTITY`를 사용한다. 이미지 결과는 `TEXT`, 요청 생성 시각은 UTC `DATETIME(6)`이다.
+Server와 Worker는 같은 요청 테이블의 JPA 매핑을 중복해서 가진다. 스키마 변경 때 두 매핑을 함께 확인해야 하는 비용이 있다. Server의 Monster Entity는 MySQL `AUTO_INCREMENT`에 맞춘 `IDENTITY`를 사용한다. 이미지 결과는 `TEXT`, 요청 생성 시각은 UTC `DATETIME(6)`이다.
 
 ## 의도적으로 남긴 한계 ⚠️
 
 | 한계 | 현재 코드의 이유 |
 | --- | --- |
-| 등록 전체 원자성 없음 | Monster 저장과 요청 등록이 각각 `REQUIRES_NEW`로 커밋 |
+| 등록 전체 원자성 없음 | Server 서비스에 두 INSERT를 감싸는 트랜잭션 경계가 없음 |
 | 명시적 상태 없음 | 요청 행은 대기·실행·완료를 구분하지 않음 |
 | 원자적 선점 없음 | 조회와 DELETE가 분리되고 DELETE 행 수를 소유권으로 보지 않음 |
 | 처리 전 삭제 | Generator·결과 저장 실패 뒤 복구할 작업 행이 없음 |

@@ -16,7 +16,9 @@ export TECHNICAL_WRITING_TEST_DB_PASSWORD='...'
 ./gradlew failureTest --rerun-tasks
 ```
 
-테스트는 `BaselineImageWorkerApplication`을 사용해 기준 Worker·Scheduler·제어 가능한 Generator를 등록한다. 역할·구현 버전을 고르기 위한 Spring Profile은 사용하지 않는다.
+동시 선점·유실·오연결·Scheduler 중단 테스트는 `com.kng0501.dbpolling.worker.ImageWorkerApplication` Worker Context를 사용한다. 등록 원자성 테스트는 `com.kng0501.dbpolling.server.WebServerApplication` Server Context를 사용한다. 역할을 고르기 위한 Spring Profile은 사용하지 않는다.
+
+각 Context는 상대 프로세스의 Java Bean·Entity·Repository를 등록하지 않는다. RED 시나리오가 관찰하는 프로세스 간 계약은 MySQL 테이블뿐이다.
 
 기대 결과는 다섯 불변식 assertion 실패와 Gradle 종료 코드 `1`이다. DB 접속, Context 초기화, JPA 매핑 오류는 RED 재현 성공이 아니다.
 

@@ -15,7 +15,9 @@ flowchart LR
     W --> C
 ```
 
-MySQL만 두 프로세스 사이에서 공유한다. Bean, Entity 인스턴스, 영속성 컨텍스트, 메모리 큐는 공유하지 않는다.
+MySQL만 두 프로세스 사이에서 공유한다. Server와 Worker는 Java 클래스를 공유하지 않고, 각각 필요한 Entity·Repository·enum을 별도로 가진다. Bean, Entity 인스턴스, 영속성 컨텍스트, 메모리 큐는 공유하지 않는다.
+
+이 선택의 비용은 중복 JPA 매핑과 enum이 스키마 변경 시 어긋날 수 있다는 점이다. `monster_id`, 상태 값, 컬럼명·정밀도를 바꾸면 두 프로세스의 매핑을 함께 확인해야 한다.
 
 ## 단계
 
@@ -32,8 +34,8 @@ MySQL만 두 프로세스 사이에서 공유한다. Bean, Entity 인스턴스, 
 
 | 단계 | 웹 서버 | 이미지 워커 | MySQL 테이블 |
 | --- | --- | --- | --- |
-| 02 | `BaselineWebServerApplication` | `BaselineImageWorkerApplication` | `monster`, `image_generation_request` |
-| 04 | `HardenedWebServerApplication` | `HardenedImageWorkerApplication` | `queue_monster`, `image_generation_job` |
+| 02 | `com.kng0501.dbpolling.server.WebServerApplication` | `com.kng0501.dbpolling.worker.ImageWorkerApplication` | `monster`, `image_generation_request` |
+| 04 | `com.kng0501.dbqueue.server.WebServerApplication` | `com.kng0501.dbqueue.worker.ImageWorkerApplication` | `queue_monster`, `image_generation_job` |
 
 웹 Application은 Controller, 요청 등록·결과 조회 서비스, 해당 단계 JPA Entity·Repository만 등록한다. 워커 Application은 Polling, Scheduler, `ImageGenerator`, 실행 Executor와 04의 복구 Bean만 등록한다. 워커는 `WebApplicationType.NONE`으로 시작해 HTTP 포트를 열지 않는다.
 
@@ -44,14 +46,14 @@ Spring Profile은 역할이나 구현 버전을 선택하는 데 사용하지 �
 | 항목 | 02와 04 공통 기본값 | 제약 |
 | --- | --- | --- |
 | DB | 같은 로컬 MySQL URL | 각 JVM은 별도 Hikari Pool 소유 |
-| 요청 | `POST /jobs` JSON `{ "prompt": "..." }` | baseline 응답에는 Job 상태 없음 |
+| 요청 | `POST /jobs` JSON `{ "prompt": "..." }` | 02 응답에는 Job 상태 없음 |
 | Polling 간격 | 100ms | 관찰용 초기값 |
 | 워커 동시 처리 | 1 | 테스트는 제어 목적으로 별도 값을 사용 가능 |
 | 모의 이미지 생성 | 5초 후 `image:{prompt}` | 실제 AI 성능 측정값 아님 |
 | 처리 기한 | hardened 30초 | 5초 모의 생성보다 길게 둔 실습용 값 |
 
 테스트는 제어 가능한 Generator를 주입하므로 실제 5초를 기다리지 않는다.
-웹 API 비교 테스트는 `ComparisonJobFixtures.PROMPT`의 동일 `blue dragon` 작업 데이터를 사용한다.
+02와 04의 예시는 같은 `blue dragon` 요청을 사용한다. 이는 모의 이미지 생성 조건을 맞추기 위한 예시일 뿐 성능 비교 결과가 아니다.
 
 ## 로컬 MySQL 준비
 
@@ -82,12 +84,14 @@ export TECHNICAL_WRITING_DB_POOL_SIZE='5'
 ```bash
 # application_user와 technical_writing은 실제 값으로 바꾼다.
 mysql --host=127.0.0.1 --user=application_user --password technical_writing \
-  < 02-minimal-db-polling/src/main/resources/db/baseline/schema.sql
+  < 02-minimal-db-polling/src/main/resources/db/02/schema.sql
 mysql --host=127.0.0.1 --user=application_user --password technical_writing \
-  < 04-reliability-hardening/src/main/resources/db/hardening/schema.sql
+  < 04-reliability-hardening/src/main/resources/db/04/schema.sql
 ```
 
-스키마는 `IF NOT EXISTS` DDL과 `ddl-auto=validate`를 유지한다. 테스트는 전용 테스트 DB에 필요한 단계 스키마만 초기화하고, baseline·hardened의 네 테이블만 정리한다.
+스키마는 `IF NOT EXISTS` DDL과 `ddl-auto=validate`를 유지한다. 테스트는 전용 테스트 DB에 필요한 단계 스키마만 초기화하고, 02·04의 네 테이블만 정리한다.
+
+단일 Gradle source set에서 두 단계 리소스를 함께 읽으므로 classpath 충돌을 피하기 위해 SQL 경로는 `db/02/schema.sql`, `db/04/schema.sql`로 구분한다. 이전의 구현 버전 이름은 경로에 사용하지 않는다.
 
 ## 네 실행 명령
 
@@ -97,12 +101,12 @@ mysql --host=127.0.0.1 --user=application_user --password technical_writing \
 cd /Users/kangrae/Documents/GitHub/woowa-archive/technical-writing
 
 # 02: 터미널 1, 터미널 2
-./gradlew runBaselineWebServer
-./gradlew runBaselineImageWorker
+./gradlew run02WebServer
+./gradlew run02ImageWorker
 
 # 04: 터미널 1, 터미널 2
-./gradlew runHardenedWebServer
-./gradlew runHardenedImageWorker
+./gradlew run04WebServer
+./gradlew run04ImageWorker
 ```
 
 각 터미널에서 `Ctrl-C`를 보내면 해당 JVM만 종료한다. 워커가 종료되어도 웹 서버는 DB에 요청을 저장한다. 웹 서버가 종료되어도 워커는 기존 DB 작업을 계속 처리한다.
@@ -137,10 +141,10 @@ curl -i -X POST http://127.0.0.1:8080/jobs \
 
 | 명령 | 결과 |
 | --- | --- |
-| `./gradlew compileTestJava bootJar --rerun-tasks` | 성공 |
-| `./gradlew tasks --group application` | 네 실행 작업 등록 확인 |
-| `./gradlew test --rerun-tasks` | 40건 모두 전용 `${TECHNICAL_WRITING_TEST_DB_URL}` 미설정으로 Context 초기화 실패 |
-| `./gradlew failureTest --rerun-tasks` | 5건 모두 같은 TEST_DB URL 초기화 실패. RED assertion 결과 아님 |
+| `./gradlew clean compileJava compileTestJava` | 성공 |
+| `./gradlew tasks --group application` | `run02WebServer`, `run02ImageWorker`, `run04WebServer`, `run04ImageWorker` 등록 확인 |
+| `./gradlew test --rerun-tasks` | 현재 리팩터링 뒤 재실행 보류. TEST_DB URL 미설정 상태 |
+| `./gradlew failureTest --rerun-tasks` | 현재 리팩터링 뒤 재실행 보류. TEST_DB URL 미설정 상태 |
 
 MySQL 인증 정보가 없으므로 통합 테스트, RED assertion, 실제 두 JVM 검증 결과는 확인 필요다. H2 대체나 테스트 생략은 하지 않았다.
 
