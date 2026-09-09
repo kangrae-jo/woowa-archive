@@ -39,18 +39,21 @@ final class JobQueueTest {
     private final MutableClock clock;
     private final QueueSettings settings;
     private final JobQueue queue;
+    private final ExpiredJobRecovery recovery;
 
     @Autowired
     JobQueueTest(
             final JdbcTemplate jdbc,
             final MutableClock clock,
             final QueueSettings settings,
-            final JobQueue queue
+            final JobQueue queue,
+            final ExpiredJobRecovery recovery
     ) {
         this.jdbc = jdbc;
         this.clock = clock;
         this.settings = settings;
         this.queue = queue;
+        this.recovery = recovery;
     }
 
     @BeforeEach
@@ -250,7 +253,7 @@ final class JobQueueTest {
         clock.advance(settings.processingTimeout());
         assertFalse(queue.complete(a.jobId(), a.claimToken(), "expired"));
         assertFalse(queue.fail(a, new IllegalStateException("expired failure")));
-        assertEquals(1, queue.recoverExpired());
+        assertEquals(1, recovery.recoverExpired());
         clock.advance(settings.retryDelay());
         final Job b = queue.tryClaim(a.jobId()).orElseThrow();
         assertNotEquals(a.claimToken(), b.claimToken());
@@ -269,11 +272,11 @@ final class JobQueueTest {
     void 기한_직전에는_복구하지_않고_정확히_기한부터_복구한다() {
         final Job claim = claim("dragon");
         clock.advance(settings.processingTimeout().minus(1, ChronoUnit.MICROS));
-        assertEquals(0, queue.recoverExpired());
+        assertEquals(0, recovery.recoverExpired());
         assertEquals(JobStatus.RUNNING, job(claim.jobId()).status());
 
         clock.advance(Duration.of(1, ChronoUnit.MICROS));
-        assertEquals(1, queue.recoverExpired());
+        assertEquals(1, recovery.recoverExpired());
         final Job pending = job(claim.jobId());
         assertEquals(JobStatus.PENDING, pending.status());
         assertEquals(1, pending.attemptCount());
@@ -281,7 +284,7 @@ final class JobQueueTest {
         assertNull(pending.claimToken());
         assertNull(pending.deadlineAt());
         assertNull(pending.finishedAt());
-        assertEquals(0, queue.recoverExpired());
+        assertEquals(0, recovery.recoverExpired());
     }
 
     @Test
@@ -290,7 +293,7 @@ final class JobQueueTest {
         clock.advance(settings.processingTimeout().minus(1, ChronoUnit.MICROS));
 
         assertTrue(queue.complete(claim.jobId(), claim.claimToken(), "image"));
-        assertEquals(0, queue.recoverExpired());
+        assertEquals(0, recovery.recoverExpired());
     }
 
     @Test
@@ -320,7 +323,7 @@ final class JobQueueTest {
         clock.advance(Duration.ofDays(1));
         assertTrue(queue.findCandidate().isEmpty());
         assertTrue(queue.tryClaim(ended.jobId()).isEmpty());
-        assertEquals(0, queue.recoverExpired());
+        assertEquals(0, recovery.recoverExpired());
         assertEquals(1, count(jdbc, "image_generation_job"));
     }
 
@@ -334,7 +337,7 @@ final class JobQueueTest {
         }
 
         clock.advance(settings.processingTimeout());
-        assertEquals(1, queue.recoverExpired());
+        assertEquals(1, recovery.recoverExpired());
 
         final Job ended = job(current.jobId());
         assertEquals(JobStatus.FAILED, ended.status());

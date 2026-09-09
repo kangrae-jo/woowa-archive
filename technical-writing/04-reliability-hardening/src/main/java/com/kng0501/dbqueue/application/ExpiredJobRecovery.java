@@ -10,10 +10,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
 public class ExpiredJobRecovery {
 
     private static final int RECOVERY_BATCH_SIZE = 100;

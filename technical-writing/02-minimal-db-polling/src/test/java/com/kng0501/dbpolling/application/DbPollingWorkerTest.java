@@ -9,6 +9,7 @@ import com.kng0501.dbpolling.domain.Monster;
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
 import com.kng0501.dbpolling.persistence.MonsterRepository;
 import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.BaselineJobRegistrationFixture;
 import com.kng0501.technicalwriting.testsupport.BaselineTestImageGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +22,6 @@ final class DbPollingWorkerTest {
 
     private final MonsterRepository monsterRepository;
     private final ImageGenerationRequestRepository requestRepository;
-    private final ImageGenerationService imageGenerationService;
     private final DbPollingWorker worker;
     private final BaselineTestImageGenerator generator;
     private final JdbcTemplate jdbc;
@@ -30,14 +30,12 @@ final class DbPollingWorkerTest {
     DbPollingWorkerTest(
             final MonsterRepository monsterRepository,
             final ImageGenerationRequestRepository requestRepository,
-            final ImageGenerationService imageGenerationService,
             final DbPollingWorker worker,
             final BaselineTestImageGenerator generator,
             final JdbcTemplate jdbc
     ) {
         this.monsterRepository = monsterRepository;
         this.requestRepository = requestRepository;
-        this.imageGenerationService = imageGenerationService;
         this.worker = worker;
         this.generator = generator;
         this.jdbc = jdbc;
@@ -57,7 +55,9 @@ final class DbPollingWorkerTest {
 
     @Test
     void 요청_한_건을_조회해_이미지를_생성한다() {
-        final long monsterId = imageGenerationService.request("blue dragon");
+        final long monsterId = BaselineJobRegistrationFixture.register(
+                monsterRepository, requestRepository, "blue dragon"
+        );
 
         final boolean processed = worker.pollOnce();
 

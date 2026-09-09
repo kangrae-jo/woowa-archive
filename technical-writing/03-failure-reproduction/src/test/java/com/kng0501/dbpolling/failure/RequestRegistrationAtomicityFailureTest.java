@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.kng0501.dbpolling.application.ImageGenerationService;
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
-import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.BaselineWebIntegrationTest;
 import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@BaselineIntegrationTest
+@BaselineWebIntegrationTest
 @Tag("failure-reproduction")
 final class RequestRegistrationAtomicityFailureTest {
 

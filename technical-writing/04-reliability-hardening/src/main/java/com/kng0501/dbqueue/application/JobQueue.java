@@ -26,20 +26,17 @@ public class JobQueue {
     private final QueueSettings settings;
     private final QueueMonsterJpaRepository monsters;
     private final ImageGenerationJobJpaRepository jobs;
-    private final ExpiredJobRecovery expiredJobRecovery;
 
     public JobQueue(
             final Clock clock,
             final QueueSettings settings,
             final QueueMonsterJpaRepository monsters,
-            final ImageGenerationJobJpaRepository jobs,
-            final ExpiredJobRecovery expiredJobRecovery
+            final ImageGenerationJobJpaRepository jobs
     ) {
         this.clock = clock;
         this.settings = settings;
         this.monsters = monsters;
         this.jobs = jobs;
-        this.expiredJobRecovery = expiredJobRecovery;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -113,10 +110,6 @@ public class JobQueue {
                 claim.jobId(), claim.claimToken(), claim.attemptCount(), now,
                 now.plus(settings.retryDelay()), reason, JobStatus.RUNNING, JobStatus.PENDING
         ) == 1;
-    }
-
-    public int recoverExpired() {
-        return expiredJobRecovery.recoverExpired();
     }
 
     @Transactional(readOnly = true)

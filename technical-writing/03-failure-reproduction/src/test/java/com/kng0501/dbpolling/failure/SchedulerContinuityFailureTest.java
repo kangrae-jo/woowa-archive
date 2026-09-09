@@ -5,9 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.kng0501.dbpolling.application.DbPollingScheduler;
-import com.kng0501.dbpolling.application.ImageGenerationService;
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
+import com.kng0501.dbpolling.persistence.MonsterRepository;
 import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.BaselineJobRegistrationFixture;
 import com.kng0501.technicalwriting.testsupport.BaselineTestImageGenerator;
 import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
 import java.util.concurrent.CountDownLatch;
@@ -27,7 +28,7 @@ import org.springframework.test.annotation.DirtiesContext;
 final class SchedulerContinuityFailureTest {
 
     private final ImageGenerationRequestRepository requestRepository;
-    private final ImageGenerationService imageGenerationService;
+    private final MonsterRepository monsterRepository;
     private final DbPollingScheduler scheduler;
     private final BaselineTestImageGenerator generator;
     private final JdbcTemplate jdbc;
@@ -35,13 +36,13 @@ final class SchedulerContinuityFailureTest {
     @Autowired
     SchedulerContinuityFailureTest(
             final ImageGenerationRequestRepository requestRepository,
-            final ImageGenerationService imageGenerationService,
+            final MonsterRepository monsterRepository,
             final DbPollingScheduler scheduler,
             final BaselineTestImageGenerator generator,
             final JdbcTemplate jdbc
     ) {
         this.requestRepository = requestRepository;
-        this.imageGenerationService = imageGenerationService;
+        this.monsterRepository = monsterRepository;
         this.scheduler = scheduler;
         this.generator = generator;
         this.jdbc = jdbc;
@@ -74,14 +75,14 @@ final class SchedulerContinuityFailureTest {
             return "image:" + prompt;
         });
 
-        imageGenerationService.request("first request");
+        BaselineJobRegistrationFixture.register(monsterRepository, requestRepository, "first request");
         scheduler.start();
         assertTrue(
                 firstAttempted.await(2, TimeUnit.SECONDS),
                 "첫 번째 작업이 제한 시간 안에 실행되지 않아 테스트를 준비할 수 없습니다."
         );
 
-        imageGenerationService.request("later request");
+        BaselineJobRegistrationFixture.register(monsterRepository, requestRepository, "later request");
         final boolean processed = laterJobProcessed.await(1, TimeUnit.SECONDS);
 
         assertAll(

@@ -1,20 +1,20 @@
 package com.kng0501.technicalwriting.testsupport;
 
-import com.kng0501.dbqueue.worker.HardenedImageWorkerApplication;
+import com.kng0501.dbqueue.server.HardenedWebServerApplication;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @SpringBootTest(
-        classes = HardenedImageWorkerApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        classes = HardenedWebServerApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = {
                 "spring.datasource.url=${TECHNICAL_WRITING_TEST_DB_URL}",
                 "spring.datasource.username=${TECHNICAL_WRITING_TEST_DB_USERNAME}",
@@ -31,6 +31,6 @@ import org.springframework.context.annotation.Import;
                 "image-generator.delay=0s"
         }
 )
-@Import(HardenedTestConfiguration.class)
-public @interface HardenedIntegrationTest {
+@AutoConfigureMockMvc
+public @interface HardenedWebIntegrationTest {
 }

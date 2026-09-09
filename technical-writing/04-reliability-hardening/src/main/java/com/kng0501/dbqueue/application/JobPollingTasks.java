@@ -1,20 +1,16 @@
 package com.kng0501.dbqueue.application;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
-@ConditionalOnProperty(prefix = "db-queue", name = "scheduling-enabled", havingValue = "true")
 public class JobPollingTasks {
 
-    private final JobQueue queue;
+    private final ExpiredJobRecovery recovery;
     private final JobScheduler scheduler;
 
-    public JobPollingTasks(final JobQueue queue, final JobScheduler scheduler) {
-        this.queue = queue;
+    public JobPollingTasks(final ExpiredJobRecovery recovery, final JobScheduler scheduler) {
+        this.recovery = recovery;
         this.scheduler = scheduler;
     }
 
@@ -25,7 +21,7 @@ public class JobPollingTasks {
 
     @Scheduled(fixedDelayString = "${db-queue.recovery-interval}")
     public void recoverExpired() {
-        runSafely("recovery", queue::recoverExpired);
+        runSafely("recovery", recovery::recoverExpired);
     }
 
     private void runSafely(final String operation, final Runnable action) {

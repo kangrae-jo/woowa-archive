@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.kng0501.dbpolling.application.DbPollingWorker;
-import com.kng0501.dbpolling.application.ImageGenerationService;
 import com.kng0501.dbpolling.domain.ImageGenerationRequest;
 import com.kng0501.dbpolling.domain.ImageGenerator;
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
 import com.kng0501.dbpolling.persistence.MonsterRepository;
 import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.BaselineJobRegistrationFixture;
 import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
 import java.util.Optional;
 import java.util.concurrent.BrokenBarrierException;
@@ -33,19 +33,16 @@ final class DuplicateClaimFailureTest {
 
     private final MonsterRepository monsterRepository;
     private final ImageGenerationRequestRepository requestRepository;
-    private final ImageGenerationService imageGenerationService;
     private final JdbcTemplate jdbc;
 
     @Autowired
     DuplicateClaimFailureTest(
             final MonsterRepository monsterRepository,
             final ImageGenerationRequestRepository requestRepository,
-            final ImageGenerationService imageGenerationService,
             final JdbcTemplate jdbc
     ) {
         this.monsterRepository = monsterRepository;
         this.requestRepository = requestRepository;
-        this.imageGenerationService = imageGenerationService;
         this.jdbc = jdbc;
     }
 
@@ -61,7 +58,7 @@ final class DuplicateClaimFailureTest {
 
     @Test
     void 두_워커는_같은_작업을_한_번만_처리한다() throws Exception {
-        imageGenerationService.request("blue dragon");
+        BaselineJobRegistrationFixture.register(monsterRepository, requestRepository, "blue dragon");
         final var synchronizedRepository = new BarrierRequestRepository(
                 requestRepository,
                 new CyclicBarrier(2)

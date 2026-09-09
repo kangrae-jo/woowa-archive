@@ -5,9 +5,7 @@ import com.kng0501.dbpolling.domain.ImageGenerator;
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
 import com.kng0501.dbpolling.persistence.MonsterRepository;
 import java.util.Optional;
-import org.springframework.stereotype.Component;
 
-@Component
 public class DbPollingWorker {
 
     private final ImageGenerationRequestRepository requestRepository;

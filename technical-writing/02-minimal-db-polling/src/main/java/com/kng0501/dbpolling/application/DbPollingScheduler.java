@@ -6,9 +6,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.context.SmartLifecycle;
-import org.springframework.stereotype.Component;
 
-@Component
 public class DbPollingScheduler implements SmartLifecycle, AutoCloseable {
 
     private final DbPollingWorker worker;

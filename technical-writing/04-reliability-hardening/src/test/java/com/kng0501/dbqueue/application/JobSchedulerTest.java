@@ -41,6 +41,7 @@ final class JobSchedulerTest {
     private final MutableClock clock;
     private final QueueSettings settings;
     private final JobQueue queue;
+    private final ExpiredJobRecovery recovery;
     private final JobScheduler scheduler;
     private final HardenedTestImageGenerator generator;
     private final ThreadPoolExecutor executionPool;
@@ -51,6 +52,7 @@ final class JobSchedulerTest {
             final MutableClock clock,
             final QueueSettings settings,
             final JobQueue queue,
+            final ExpiredJobRecovery recovery,
             final JobScheduler scheduler,
             final HardenedTestImageGenerator generator,
             @Qualifier("jobExecutionExecutor") final ThreadPoolExecutor executionPool
@@ -59,6 +61,7 @@ final class JobSchedulerTest {
         this.clock = clock;
         this.settings = settings;
         this.queue = queue;
+        this.recovery = recovery;
         this.scheduler = scheduler;
         this.generator = generator;
         this.executionPool = executionPool;
@@ -115,7 +118,7 @@ final class JobSchedulerTest {
                     return null;
                 })
                 .when(failingOnce).dispatch();
-        final var tasks = new JobPollingTasks(queue, failingOnce);
+        final var tasks = new JobPollingTasks(recovery, failingOnce);
 
         assertDoesNotThrow(tasks::dispatch);
         tasks.dispatch();
@@ -200,7 +203,7 @@ final class JobSchedulerTest {
             scheduler.dispatch();
             assertTrue(started.await(5, TimeUnit.SECONDS));
             clock.advance(settings.processingTimeout());
-            assertEquals(1, queue.recoverExpired());
+            assertEquals(1, recovery.recoverExpired());
 
             final Job recovered = queue.findJob(target.jobId()).orElseThrow();
             assertEquals(JobStatus.PENDING, recovered.status());

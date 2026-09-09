@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.kng0501.dbpolling.domain.Monster;
+import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
 import com.kng0501.dbpolling.persistence.MonsterRepository;
 import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.BaselineJobRegistrationFixture;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
@@ -20,20 +22,20 @@ import org.springframework.test.annotation.DirtiesContext;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 final class DbPollingSchedulerTest {
 
-    private final ImageGenerationService imageGenerationService;
     private final MonsterRepository monsterRepository;
+    private final ImageGenerationRequestRepository requestRepository;
     private final DbPollingScheduler scheduler;
     private final JdbcTemplate jdbc;
 
     @Autowired
     DbPollingSchedulerTest(
-            final ImageGenerationService imageGenerationService,
             final MonsterRepository monsterRepository,
+            final ImageGenerationRequestRepository requestRepository,
             final DbPollingScheduler scheduler,
             final JdbcTemplate jdbc
     ) {
-        this.imageGenerationService = imageGenerationService;
         this.monsterRepository = monsterRepository;
+        this.requestRepository = requestRepository;
         this.scheduler = scheduler;
         this.jdbc = jdbc;
     }
@@ -51,7 +53,9 @@ final class DbPollingSchedulerTest {
 
     @Test
     void scheduler가_주기적으로_요청을_polling한다() throws InterruptedException {
-        final long monsterId = imageGenerationService.request("red turtle");
+        final long monsterId = BaselineJobRegistrationFixture.register(
+                monsterRepository, requestRepository, "red turtle"
+        );
 
         scheduler.start();
 

@@ -4,9 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.kng0501.dbpolling.application.DbPollingWorker;
-import com.kng0501.dbpolling.application.ImageGenerationService;
 import com.kng0501.dbpolling.persistence.ImageGenerationRequestRepository;
+import com.kng0501.dbpolling.persistence.MonsterRepository;
 import com.kng0501.technicalwriting.testsupport.BaselineIntegrationTest;
+import com.kng0501.technicalwriting.testsupport.BaselineJobRegistrationFixture;
 import com.kng0501.technicalwriting.testsupport.BaselineTestImageGenerator;
 import com.kng0501.technicalwriting.testsupport.MySqlTestDatabase;
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +22,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 final class WorkerTerminationFailureTest {
 
     private final ImageGenerationRequestRepository requestRepository;
-    private final ImageGenerationService imageGenerationService;
+    private final MonsterRepository monsterRepository;
     private final DbPollingWorker worker;
     private final BaselineTestImageGenerator generator;
     private final JdbcTemplate jdbc;
@@ -29,13 +30,13 @@ final class WorkerTerminationFailureTest {
     @Autowired
     WorkerTerminationFailureTest(
             final ImageGenerationRequestRepository requestRepository,
-            final ImageGenerationService imageGenerationService,
+            final MonsterRepository monsterRepository,
             final DbPollingWorker worker,
             final BaselineTestImageGenerator generator,
             final JdbcTemplate jdbc
     ) {
         this.requestRepository = requestRepository;
-        this.imageGenerationService = imageGenerationService;
+        this.monsterRepository = monsterRepository;
         this.worker = worker;
         this.generator = generator;
         this.jdbc = jdbc;
@@ -55,7 +56,7 @@ final class WorkerTerminationFailureTest {
 
     @Test
     void 워커가_종료되어도_처리중인_작업은_유실되지_않는다() {
-        imageGenerationService.request("blue dragon");
+        BaselineJobRegistrationFixture.register(monsterRepository, requestRepository, "blue dragon");
         generator.use(prompt -> {
             throw new SimulatedWorkerStopException();
         });

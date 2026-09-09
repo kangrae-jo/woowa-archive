@@ -5,11 +5,9 @@ import com.kng0501.dbqueue.domain.JobStatus;
 import com.kng0501.dbqueue.domain.QueueSettings;
 import com.kng0501.dbqueue.persistence.jpa.ImageGenerationJobJpaRepository;
 import java.time.Instant;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 public class ExpiredJobTransition {
 
     private static final String EXPIRED_REASON = "processing deadline expired";

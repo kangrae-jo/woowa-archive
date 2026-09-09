@@ -49,6 +49,7 @@ sourceSets {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 
     compileOnly 'org.projectlombok:lombok:1.18.46'
     annotationProcessor 'org.projectlombok:lombok:1.18.46'
@@ -61,6 +62,46 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+def java21Launcher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(21)
+}
+
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = java21Launcher
+}
+
+springBoot {
+    mainClass = 'com.kng0501.dbpolling.server.BaselineWebServerApplication'
+}
+
+tasks.register('runBaselineWebServer', JavaExec) {
+    group = 'application'
+    description = '02단계 Baseline 웹 서버를 별도 JVM으로 실행합니다.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.kng0501.dbpolling.server.BaselineWebServerApplication'
+}
+
+tasks.register('runBaselineImageWorker', JavaExec) {
+    group = 'application'
+    description = '02단계 Baseline 이미지 워커를 별도 JVM으로 실행합니다.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.kng0501.dbpolling.worker.BaselineImageWorkerApplication'
+}
+
+tasks.register('runHardenedWebServer', JavaExec) {
+    group = 'application'
+    description = '04단계 Hardened 웹 서버를 별도 JVM으로 실행합니다.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.kng0501.dbqueue.server.HardenedWebServerApplication'
+}
+
+tasks.register('runHardenedImageWorker', JavaExec) {
+    group = 'application'
+    description = '04단계 Hardened 이미지 워커를 별도 JVM으로 실행합니다.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.kng0501.dbqueue.worker.HardenedImageWorkerApplication'
 }
 
 test {

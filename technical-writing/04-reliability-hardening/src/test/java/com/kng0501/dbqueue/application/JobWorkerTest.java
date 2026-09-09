@@ -27,6 +27,7 @@ final class JobWorkerTest {
     private final MutableClock clock;
     private final QueueSettings settings;
     private final JobQueue queue;
+    private final ExpiredJobRecovery recovery;
     private final JobWorker worker;
     private final HardenedTestImageGenerator generator;
 
@@ -36,6 +37,7 @@ final class JobWorkerTest {
             final MutableClock clock,
             final QueueSettings settings,
             final JobQueue queue,
+            final ExpiredJobRecovery recovery,
             final JobWorker worker,
             final HardenedTestImageGenerator generator
     ) {
@@ -43,6 +45,7 @@ final class JobWorkerTest {
         this.clock = clock;
         this.settings = settings;
         this.queue = queue;
+        this.recovery = recovery;
         this.worker = worker;
         this.generator = generator;
     }
@@ -96,7 +99,7 @@ final class JobWorkerTest {
 
         dropCheckIfExists(jdbc, "image_generation_job", "reject_failure");
         clock.advance(settings.processingTimeout());
-        assertEquals(1, queue.recoverExpired());
+        assertEquals(1, recovery.recoverExpired());
         clock.advance(settings.retryDelay());
         final Job retry = queue.tryClaim(claim.jobId()).orElseThrow();
         generator.reset();
@@ -113,11 +116,11 @@ final class JobWorkerTest {
                 + "job_id <> " + first.jobId() + " OR last_error IS NULL)");
         clock.advance(settings.processingTimeout());
 
-        assertEquals(1, queue.recoverExpired());
+        assertEquals(1, recovery.recoverExpired());
 
         assertEquals(JobStatus.RUNNING, queue.findJob(first.jobId()).orElseThrow().status());
         assertEquals(JobStatus.PENDING, queue.findJob(second.jobId()).orElseThrow().status());
         dropCheckIfExists(jdbc, "image_generation_job", "reject_failure");
-        assertEquals(1, queue.recoverExpired());
+        assertEquals(1, recovery.recoverExpired());
     }
 }

@@ -1,17 +1,13 @@
 spring:
   application:
     name: db-polling-technical-writing
-  profiles:
-    default: hardened
-  main:
-    web-application-type: none
   datasource:
     url: ${TECHNICAL_WRITING_DB_URL}
     username: ${TECHNICAL_WRITING_DB_USERNAME}
     password: ${TECHNICAL_WRITING_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: ${TECHNICAL_WRITING_DB_POOL_SIZE:5}
       connection-init-sql: SET time_zone = '+00:00'
   jpa:
     open-in-view: false
@@ -23,7 +19,27 @@ spring:
           time_zone: UTC
   sql:
     init:
-      mode: always
+      mode: never
+
+server:
+  address: ${TECHNICAL_WRITING_SERVER_ADDRESS:127.0.0.1}
+  port: ${TECHNICAL_WRITING_SERVER_PORT:8080}
+
+image-generator:
+  delay: ${TECHNICAL_WRITING_IMAGE_GENERATOR_DELAY:5s}
+
+baseline:
+  polling-interval: 100ms
+  scheduling-enabled: true
+
+db-queue:
+  processing-timeout: 30s
+  max-attempts: 3
+  retry-delay: 1s
+  concurrency: 1
+  polling-interval: 100ms
+  recovery-interval: 100ms
+  scheduling-enabled: true
 
 logging:
   level:
