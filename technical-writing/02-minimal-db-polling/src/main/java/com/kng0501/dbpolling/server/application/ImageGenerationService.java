@@ -7,11 +7,13 @@ import com.kng0501.dbpolling.server.persistence.jpa.ImageGenerationRequestJpaRep
 import com.kng0501.dbpolling.server.persistence.jpa.MonsterJpaRepository;
 import java.time.Clock;
 import java.util.Optional;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public final class ImageGenerationService {
+public class ImageGenerationService {
 
     private final MonsterJpaRepository monsters;
     private final ImageGenerationRequestJpaRepository requests;
@@ -30,7 +32,11 @@ public final class ImageGenerationService {
     public long request(final String prompt) {
         validatePrompt(prompt);
         final MonsterEntity monster = monsters.saveAndFlush(new MonsterEntity(prompt));
-        requests.saveAndFlush(new ImageGenerationRequestEntity(prompt, clock.instant()));
+        try {
+            requests.saveAndFlush(new ImageGenerationRequestEntity(prompt, clock.instant()));
+        } catch (final DataAccessException failure) {
+            throw new DataIntegrityViolationException("이미지 생성 요청 저장에 실패했습니다.", failure);
+        }
         return monster.getId();
     }
 

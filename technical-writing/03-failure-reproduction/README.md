@@ -79,4 +79,4 @@ Monster AUTO_INCREMENT와 요청 ID를 의도적으로 어긋나게 만든다. �
 
 ## 검증 상태
 
-2026-09-09 기준 `./gradlew failureTest --rerun-tasks`는 5건 모두 전용 `${TECHNICAL_WRITING_TEST_DB_URL}` 미설정으로 Context 초기화에서 실패했다. 이는 RED 재현 성공이 아니다. 인증 후에는 Context 오류가 아닌 위 assertion에서만 실패하는지 확인해야 한다.
+2026-09-14 기준 전용 MySQL 테스트 DB에서 `./gradlew failureTest --rerun-tasks`를 실행했다. 다섯 테스트는 모두 Context 오류가 아니라 각 불변식 assertion에서 실패했고, 종료 코드 `1`은 의도된 RED 결과다. 이는 과거 운영 장애의 실측이 아니라 현재 재구성 코드의 잠재적 실패 재현이다.

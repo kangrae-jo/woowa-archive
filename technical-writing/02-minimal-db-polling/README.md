@@ -95,4 +95,4 @@ Server와 Worker는 같은 요청 테이블의 JPA 매핑을 중복해서 가진
 
 웹 Context가 Worker·Scheduler·Generator를 만들지 않고, 워커 Context가 Controller를 만들지 않는 MySQL 통합 테스트를 작성했다. 테스트는 실제 5초 대신 제어 가능한 Generator를 사용한다.
 
-2026-09-09 기준 코드와 테스트는 컴파일됐다. `./gradlew test --rerun-tasks`는 전용 `${TECHNICAL_WRITING_TEST_DB_URL}` 미설정으로 Context 초기화에서 중단됐다. 실제 Context·정상 처리 결과는 확인 필요다. H2 대체와 테스트 생략은 하지 않았다.
+2026-09-14 기준 전용 MySQL 테스트 DB에서 `./gradlew test --rerun-tasks`가 `BUILD SUCCESSFUL`로 종료됐다. H2 대체와 테스트 생략은 하지 않았다. 실제 독립 JVM 두 개의 기동·종료·DB 전달 검증은 확인 필요다.

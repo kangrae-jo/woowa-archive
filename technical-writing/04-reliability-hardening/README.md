@@ -42,7 +42,7 @@ flowchart LR
 | Monster·Job 등록 비원자성 | 동일 트랜잭션에서 함께 저장 | `JobRegistrationService.request` |
 | 한 작업 예외로 Scheduler 중단 | Job 실패 전환, Scheduler 경계 예외 격리 | `JobWorker`, `JobPollingTasks` |
 
-03의 RED 테스트를 hardened 구현에 그대로 이식하는 전체 회귀는 05단계 범위다.
+03의 RED 불변식은 05단계에서 04 테스트 다섯 건에 `regression-verification` 태그를 붙여 GREEN 회귀 기준으로 검증한다.
 
 ## 상태와 데이터 모델 🔄
 
@@ -145,8 +145,8 @@ Worker에는 영속 Entity나 LAZY proxy를 넘기지 않고 불변 `Job` DTO만
 
 등록 롤백, 조건부 선점, 결과 연결, 중복·오래된 token 거부, 만료·재시도·최대 시도, Scheduler 후속 Job 처리, web Context의 Worker Bean 미등록 테스트를 작성했다.
 
-2026-09-09 기준 `./gradlew clean compileJava compileTestJava`는 성공했다. 리팩터링 뒤 `./gradlew test --rerun-tasks`와 `./gradlew failureTest --rerun-tasks`는 전용 `${TECHNICAL_WRITING_TEST_DB_URL}` 미설정으로 보류했다. 실제 SQL, 잠금·격리, 통합 테스트, 두 JVM 재시작·복구 검증은 확인 필요다. H2로 대체하지 않았다.
+2026-09-14 기준 전용 MySQL 테스트 DB에서 `./gradlew test --rerun-tasks`와 `./gradlew regressionTest --rerun-tasks`가 `BUILD SUCCESSFUL`로 종료됐다. 03 기준 구조의 `failureTest`는 다섯 RED assertion에서 의도대로 실패했다. 실제 독립 JVM 재시작·복구와 운영 MySQL의 잠금·격리 특성 일반화는 확인 필요다. H2로 대체하지 않았다.
 
 ## 비범위
 
-Heartbeat, 메시지 브로커, MySQL Testcontainers, 실제 Python AI Worker·GCS, HTTP 외 API, SSE, ETA, 05 전체 회귀, 06의 300개 작업 측정은 비범위다.
+Heartbeat, 메시지 브로커, MySQL Testcontainers, 실제 Python AI Worker·GCS, HTTP 외 API, SSE, ETA, 06의 300개 작업 측정은 비범위다.

@@ -24,10 +24,10 @@ MySQL만 두 프로세스 사이에서 공유한다. Server와 Worker는 Java �
 | 단계 | 목적 | 상태 |
 | --- | --- | --- |
 | [01](./01-past-structure-and-limitations/README.md) | 과거 경험과 측정 한계 기록 | 완료 |
-| [02](./02-minimal-db-polling/README.md) | 정상 상황의 최소 DB Polling | 구현 완료·MySQL 검증 확인 필요 |
-| [03](./03-failure-reproduction/README.md) | 기준 구현의 잠재적 실패 5개 RED 재현 | 테스트 작성·MySQL RED 확인 필요 |
-| [04](./04-reliability-hardening/README.md) | 상태·선점·재시도·복구·멱등성 추가 | 구현 완료·MySQL 검증 확인 필요 |
-| [05](./05-regression-verification/README.md) | 기준 RED 테스트의 전체 회귀 검증 | 보류 |
+| [02](./02-minimal-db-polling/README.md) | 정상 상황의 최소 DB Polling | MySQL 자동 테스트 통과·두 JVM 검증 확인 필요 |
+| [03](./03-failure-reproduction/README.md) | 기준 구현의 잠재적 실패 5개 RED 재현 | MySQL RED assertion 5건 확인 |
+| [04](./04-reliability-hardening/README.md) | 상태·선점·재시도·복구·멱등성 추가 | MySQL 자동 테스트 통과·두 JVM 검증 확인 필요 |
+| [05](./05-regression-verification/README.md) | 03 RED 불변식의 04 GREEN 회귀 검증 | MySQL GREEN 테스트 5건 통과 |
 | [06](./06-final-300-job-measurement/README.md) | 300개 작업 최종 측정 | 보류 |
 
 ## Application 구조
@@ -131,23 +131,27 @@ curl -i -X POST http://127.0.0.1:8080/jobs \
 ```bash
 ./gradlew test --rerun-tasks
 ./gradlew failureTest --rerun-tasks
+./gradlew regressionTest --rerun-tasks
 ```
 
-- `test`: 정상 동작, JPA 매핑, 웹·워커 Context 분리를 검증한다.
+- `test`: `failure-reproduction`, `regression-verification` 태그를 제외한 일반 테스트를 실행한다.
 - `failureTest`: 03단계의 `failure-reproduction` 5개만 실행한다. 다섯 불변식 assertion에서 실패해야 하며 종료 코드 `1`이 기대 결과다.
+- `regressionTest`: 05단계의 `regression-verification` 5개만 실행한다. 다섯 불변식 assertion 통과와 `BUILD SUCCESSFUL`이 기대 결과다.
 - DB 접속, Context 초기화, JPA 매핑 오류는 RED 재현 성공이 아니다.
 
-2026-09-09 기준 검증 결과는 다음과 같다.
+2026-09-14 기준 검증 결과는 다음과 같다.
 
 | 명령 | 결과 |
 | --- | --- |
 | `./gradlew clean compileJava compileTestJava` | 성공 |
 | `./gradlew tasks --group application` | `run02WebServer`, `run02ImageWorker`, `run04WebServer`, `run04ImageWorker` 등록 확인 |
-| `./gradlew test --rerun-tasks` | 현재 리팩터링 뒤 재실행 보류. TEST_DB URL 미설정 상태 |
-| `./gradlew failureTest --rerun-tasks` | 현재 리팩터링 뒤 재실행 보류. TEST_DB URL 미설정 상태 |
+| `./gradlew tasks --group verification` | `failureTest`, `regressionTest`, `test` 등록 확인 |
+| `./gradlew test --rerun-tasks` | `BUILD SUCCESSFUL` |
+| `./gradlew failureTest --rerun-tasks` | RED 테스트 5건이 의도한 assertion에서 실패. 종료 코드 `1`은 기대 결과 |
+| `./gradlew regressionTest --rerun-tasks` | GREEN 테스트 5건 통과. `BUILD SUCCESSFUL` |
 
-MySQL 인증 정보가 없으므로 통합 테스트, RED assertion, 실제 두 JVM 검증 결과는 확인 필요다. H2 대체나 테스트 생략은 하지 않았다.
+전용 MySQL 테스트 DB에서 자동 테스트를 실행했다. H2 대체나 테스트 생략은 하지 않았다. 실제 두 JVM 기동·종료·복구 검증과 06의 300개 작업 측정은 확인 필요다.
 
 ## 비범위
 
-Heartbeat, 메시지 브로커, 실제 Python AI Worker·GCS, SSE, ETA, 인증·운영 배포는 비범위다. 05 전체 회귀 검증과 06의 300개 작업 측정도 진행하지 않는다.
+Heartbeat, 메시지 브로커, 실제 Python AI Worker·GCS, SSE, ETA, 인증·운영 배포는 비범위다. 06의 300개 작업 측정도 진행하지 않는다.

@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -70,6 +71,7 @@ final class ScheduledPollingIntegrationTest {
     }
 
     @Test
+    @Tag("regression-verification")
     void 한_작업의_실패_후에도_스케줄러가_특정_후속_Job을_완료한다() throws Exception {
         final CountDownLatch firstAttempted = new CountDownLatch(1);
         generator.use(prompt -> {

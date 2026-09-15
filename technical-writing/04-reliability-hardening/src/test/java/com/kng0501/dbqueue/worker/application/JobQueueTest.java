@@ -29,9 +29,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 @WorkerIntegrationTest
@@ -73,6 +74,7 @@ final class JobQueueTest {
     }
 
     @Test
+    @Tag("regression-verification")
     void 같은_후보를_읽은_두_Worker_중_조건부_UPDATE가_성공한_하나만_선점한다() throws Exception {
         final WorkerTestData.JobData registered = register("dragon");
         final long firstCandidate = queue.findCandidate().orElseThrow();
@@ -109,6 +111,7 @@ final class JobQueueTest {
     }
 
     @Test
+    @Tag("regression-verification")
     void 결과는_Job_ID가_아닌_명시적_monsterId로_연결한다() {
         final long unrelatedMonsterId = WorkerTestData.insertMonster(jdbc, "unrelated");
         final WorkerTestData.JobData registered = register("dragon");
@@ -129,7 +132,7 @@ final class JobQueueTest {
         jdbc.execute("ALTER TABLE queue_monster ADD CONSTRAINT reject_image CHECK (image IS NULL)");
         try {
             assertThrows(
-                    DataIntegrityViolationException.class,
+                    DataAccessException.class,
                     () -> queue.complete(claim.jobId(), claim.claimToken(), "image:dragon")
             );
         } finally {
@@ -150,7 +153,7 @@ final class JobQueueTest {
         final Job claim = claim("dragon");
         deleteMonsterWithoutForeignKeyCheck(jdbc, claim.monsterId());
 
-        assertThrows(IllegalStateException.class, () -> queue.complete(claim.jobId(), claim.claimToken(), "image"));
+        assertThrows(DataAccessException.class, () -> queue.complete(claim.jobId(), claim.claimToken(), "image"));
 
         assertEquals(JobStatus.RUNNING, job(claim.jobId()).status());
         assertEquals(claim.claimToken(), job(claim.jobId()).claimToken());
@@ -185,6 +188,38 @@ final class JobQueueTest {
 
         assertEquals("current", imageOf(second.monsterId()));
         assertEquals(JobStatus.SUCCEEDED, job(second.jobId()).status());
+    }
+
+    @Test
+    @Tag("regression-verification")
+    void 응답하지_않는_Worker의_선점은_타임아웃_후_복구되고_새_토큰만_결과를_반영한다() {
+        final WorkerTestData.JobData registered = register("dragon");
+        final Job firstClaim = queue.tryClaim(registered.jobId()).orElseThrow();
+
+        assertEquals(JobStatus.RUNNING, job(registered.jobId()).status());
+        clock.advance(settings.processingTimeout());
+        assertEquals(1, recovery.recoverExpired());
+        assertAll(
+                () -> assertEquals(JobStatus.PENDING, job(registered.jobId()).status()),
+                () -> assertNull(job(registered.jobId()).claimToken()),
+                () -> assertNull(job(registered.jobId()).deadlineAt())
+        );
+        clock.advance(settings.retryDelay());
+
+        final Job secondClaim = queue.tryClaim(registered.jobId()).orElseThrow();
+        assertNotEquals(firstClaim.claimToken(), secondClaim.claimToken());
+        assertFalse(queue.complete(firstClaim.jobId(), firstClaim.claimToken(), "image:late"));
+        assertNull(imageOf(registered.monsterId()));
+        assertTrue(queue.complete(secondClaim.jobId(), secondClaim.claimToken(), "image:recovered"));
+
+        final Job completed = job(registered.jobId());
+        assertAll(
+                () -> assertEquals(JobStatus.SUCCEEDED, completed.status()),
+                () -> assertEquals(2, completed.attemptCount()),
+                () -> assertEquals("image:recovered", imageOf(registered.monsterId())),
+                () -> assertEquals(1, count(jdbc, "image_generation_job")),
+                () -> assertEquals(1, count(jdbc, "queue_monster"))
+        );
     }
 
     @Test

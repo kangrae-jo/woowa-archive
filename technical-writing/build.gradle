@@ -107,6 +107,7 @@ tasks.register('run04ImageWorker', JavaExec) {
 test {
     useJUnitPlatform {
         excludeTags 'failure-reproduction'
+        excludeTags 'regression-verification'
     }
 }
 
@@ -119,5 +120,18 @@ tasks.register('failureTest', Test) {
 
     useJUnitPlatform {
         includeTags 'failure-reproduction'
+    }
+}
+
+tasks.register('regressionTest', Test) {
+    group = 'verification'
+    description = '04단계의 신뢰성 회귀 검증 시나리오를 실행합니다.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    shouldRunAfter test
+
+    useJUnitPlatform {
+        includeTags 'regression-verification'
+        excludeTags 'failure-reproduction'
     }
 }
