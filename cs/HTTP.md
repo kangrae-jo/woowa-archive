@@ -4,6 +4,17 @@
 
 HTTP는 네트워크 기반 시스템에서 리소스의 표현을 요청과 응답 메시지로 교환하기 위한 무상태 애플리케이션 계층 프로토콜이다.
 
+HTTP/1.1 메시지는 시작 라인(Start Line), 헤더 필드, 헤더와 본문을 구분하는 빈 줄, 선택적인 메시지 본문(Message Body)으로 구성된다.
+
+```http
+POST /users HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Content-Length: 14
+
+{"name":"Kim"}
+```
+
 ### 특성
 
 #### 1. Application Layer
@@ -29,4 +40,4 @@ HTTP는 네트워크 기반 시스템에서 리소스의 표현을 요청과 응
 
 ### 키워드
 
-- OSI 7계층, Proxy, Gateway, Cookie, Session
+- OSI 7계층, [Proxy](./PROXY.md), Gateway, Cookie, Session
