@@ -16,7 +16,8 @@ sourceSets {
             srcDirs = [
                     'src/main/java',
                     '02-minimal-db-polling/src/main/java',
-                    '04-reliability-hardening/src/main/java'
+                    '04-reliability-hardening/src/main/java',
+                    '06-final-300-job-measurement/src/main/java'
             ]
         }
         resources {
@@ -33,7 +34,8 @@ sourceSets {
                     'src/test/java',
                     '02-minimal-db-polling/src/test/java',
                     '03-failure-reproduction/src/test/java',
-                    '04-reliability-hardening/src/test/java'
+                    '04-reliability-hardening/src/test/java',
+                    '06-final-300-job-measurement/src/test/java'
             ]
         }
         resources {
@@ -102,6 +104,13 @@ tasks.register('run04ImageWorker', JavaExec) {
     description = '04단계 이미지 워커를 별도 JVM으로 실행합니다.'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'com.kng0501.dbqueue.worker.ImageWorkerApplication'
+}
+
+tasks.register('run06Measurement', JavaExec) {
+    group = 'application'
+    description = '06단계의 독립 측정 프로그램을 실행합니다.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.kng0501.measurement.MeasurementApplication'
 }
 
 test {

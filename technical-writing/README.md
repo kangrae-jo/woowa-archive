@@ -28,7 +28,7 @@ MySQL만 두 프로세스 사이에서 공유한다. Server와 Worker는 Java �
 | [03](./03-failure-reproduction/README.md) | 기준 구현의 잠재적 실패 5개 RED 재현 | MySQL RED assertion 5건 확인 |
 | [04](./04-reliability-hardening/README.md) | 상태·선점·재시도·복구·멱등성 추가 | MySQL 자동 테스트 통과·두 JVM 검증 확인 필요 |
 | [05](./05-regression-verification/README.md) | 03 RED 불변식의 04 GREEN 회귀 검증 | MySQL GREEN 테스트 5건 통과 |
-| [06](./06-final-300-job-measurement/README.md) | 300개 작업 최종 측정 | 보류 |
+| [06](./06-final-300-job-measurement/README.md) | 300개 작업 측정 환경 | 환경 준비 완료·실제 측정 보류 |
 
 ## Application 구조
 
@@ -93,7 +93,7 @@ mysql --host=127.0.0.1 --user=application_user --password technical_writing \
 
 단일 Gradle source set에서 두 단계 리소스를 함께 읽으므로 classpath 충돌을 피하기 위해 SQL 경로는 `db/02/schema.sql`, `db/04/schema.sql`로 구분한다. 이전의 구현 버전 이름은 경로에 사용하지 않는다.
 
-## 네 실행 명령
+## 실행 명령
 
 서로 다른 터미널에서 각 Gradle 작업을 실행하면 별도 JVM이 시작된다. 역할 선택을 위한 `--spring.profiles.active` 옵션은 사용하지 않는다.
 
@@ -107,6 +107,9 @@ cd /Users/kangrae/Documents/GitHub/woowa-archive/technical-writing
 # 04: 터미널 1, 터미널 2
 ./gradlew run04WebServer
 ./gradlew run04ImageWorker
+
+# 06: 04 Web·Worker와 별도 터미널
+./gradlew run06Measurement
 ```
 
 각 터미널에서 `Ctrl-C`를 보내면 해당 JVM만 종료한다. 워커가 종료되어도 웹 서버는 DB에 요청을 저장한다. 웹 서버가 종료되어도 워커는 기존 DB 작업을 계속 처리한다.
@@ -132,11 +135,13 @@ curl -i -X POST http://127.0.0.1:8080/jobs \
 ./gradlew test --rerun-tasks
 ./gradlew failureTest --rerun-tasks
 ./gradlew regressionTest --rerun-tasks
+./gradlew test --tests 'com.kng0501.measurement.*' --rerun-tasks
 ```
 
 - `test`: `failure-reproduction`, `regression-verification` 태그를 제외한 일반 테스트를 실행한다.
 - `failureTest`: 03단계의 `failure-reproduction` 5개만 실행한다. 다섯 불변식 assertion에서 실패해야 하며 종료 코드 `1`이 기대 결과다.
 - `regressionTest`: 05단계의 `regression-verification` 5개만 실행한다. 다섯 불변식 assertion 통과와 `BUILD SUCCESSFUL`이 기대 결과다.
+- `com.kng0501.measurement.*`: 외부 Server·MySQL 없이 06 측정 환경의 단위 테스트만 실행한다.
 - DB 접속, Context 초기화, JPA 매핑 오류는 RED 재현 성공이 아니다.
 
 2026-09-14 기준 검증 결과는 다음과 같다.
