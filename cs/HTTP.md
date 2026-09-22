@@ -40,4 +40,4 @@ Content-Length: 14
 
 ### 키워드
 
-- OSI 7계층, [Proxy](./PROXY.md), Gateway, Cookie, Session
+- OSI 7계층, [Proxy](./PROXY.md), Gateway, [Cookie](./COOKIE.md), [Session](./SESSION.md)
