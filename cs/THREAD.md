@@ -111,4 +111,4 @@ public class Counter {
 
 ### 키워드
 
-- Process, Bytecode, Stack Frame, Race Condition, `synchronized`, `AtomicInteger`, Virtual Thread
+- Process, Bytecode, Stack Frame, Race Condition, `synchronized`, `AtomicInteger`, [Thread Pool](./THREAD_POOL.md), Virtual Thread
