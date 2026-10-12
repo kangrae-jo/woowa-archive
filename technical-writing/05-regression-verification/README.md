@@ -71,6 +71,10 @@ DB 접속·Context 초기화·JPA 매핑 오류는 회귀 검증 성공이 아�
 
 전용 MySQL 테스트 DB에서 다섯 GREEN 불변식 assertion이 모두 통과했다. H2 대체나 테스트 생략은 하지 않았다. 실제 JVM kill, OS 수준 종료 신호, 프로세스 재시작 자체는 자동 테스트 범위가 아니다.
 
+## 현재 검증 상태
+
+위 표는 과거 실행 기록이다. 로컬에 남아 있는 2026-09-15 회귀 테스트 보고서는 5건 중 `ScheduledPollingIntegrationTest` 1건의 실패를 기록한다. 실패 내용은 후속 Job이 제한 시간 안에 완료되지 않았다는 assertion이다. 현재 코드의 통과 여부는 `./gradlew regressionTest --rerun-tasks`로 재확인해야 한다. 이 상태에서는 다섯 GREEN 검증이 현재 모두 통과한다고 판단하지 않는다.
+
 ## 비범위
 
-300개 작업 측정, 성능 측정, 메시지 브로커, Heartbeat, 실제 AI 생성, 실제 JVM kill은 비범위다.
+메시지 브로커, Heartbeat, 실제 AI 생성, 실제 JVM kill은 비범위다. 05는 장애 재현에 대응하는 신뢰성 불변식을 검증한다. 300건 기본 검증과 통과 후 추가 부하 측정은 [06단계](../06-final-300-job-measurement/README.md#측정-범위와-확대-기준)의 범위이며, 정상 부하 결과와 장애 복구 결과는 서로 다른 근거로 기록한다.

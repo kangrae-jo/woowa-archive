@@ -149,4 +149,4 @@ Worker에는 영속 Entity나 LAZY proxy를 넘기지 않고 불변 `Job` DTO만
 
 ## 비범위
 
-Heartbeat, 메시지 브로커, MySQL Testcontainers, 실제 Python AI Worker·GCS, HTTP 외 API, SSE, ETA, 06의 300개 작업 측정은 비범위다.
+Heartbeat, 메시지 브로커, MySQL Testcontainers, 실제 Python AI Worker·GCS, HTTP 외 API, SSE, ETA는 비범위다. 04는 신뢰성 규칙을 구현하는 단계이며, 300건 기본 검증과 통과 후 추가 부하 측정은 [06단계](../06-final-300-job-measurement/README.md#측정-범위와-확대-기준)에서 수행한다.

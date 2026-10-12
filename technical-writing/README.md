@@ -27,8 +27,8 @@ MySQL만 두 프로세스 사이에서 공유한다. Server와 Worker는 Java �
 | [02](./02-minimal-db-polling/README.md) | 정상 상황의 최소 DB Polling | MySQL 자동 테스트 통과·두 JVM 검증 확인 필요 |
 | [03](./03-failure-reproduction/README.md) | 기준 구현의 잠재적 실패 5개 RED 재현 | MySQL RED assertion 5건 확인 |
 | [04](./04-reliability-hardening/README.md) | 상태·선점·재시도·복구·멱등성 추가 | MySQL 자동 테스트 통과·두 JVM 검증 확인 필요 |
-| [05](./05-regression-verification/README.md) | 03 RED 불변식의 04 GREEN 회귀 검증 | MySQL GREEN 테스트 5건 통과 |
-| [06](./06-final-300-job-measurement/README.md) | 300개 작업 측정 환경 | 환경 준비 완료·실제 측정 보류 |
+| [05](./05-regression-verification/README.md) | 03 RED 불변식의 04 GREEN 회귀 검증 | 회귀 테스트 작성 완료·현재 통과 여부 확인 필요 |
+| [06](./06-final-300-job-measurement/README.md) | 300건 기본 검증·통과 후 추가 부하 측정 | 환경 준비 완료·300건 실행 예정 |
 
 ## Application 구조
 
@@ -155,8 +155,10 @@ curl -i -X POST http://127.0.0.1:8080/jobs \
 | `./gradlew failureTest --rerun-tasks` | RED 테스트 5건이 의도한 assertion에서 실패. 종료 코드 `1`은 기대 결과 |
 | `./gradlew regressionTest --rerun-tasks` | GREEN 테스트 5건 통과. `BUILD SUCCESSFUL` |
 
-전용 MySQL 테스트 DB에서 자동 테스트를 실행했다. H2 대체나 테스트 생략은 하지 않았다. 실제 두 JVM 기동·종료·복구 검증과 06의 300개 작업 측정은 확인 필요다.
+전용 MySQL 테스트 DB에서 자동 테스트를 실행했다. H2 대체나 테스트 생략은 하지 않았다. 현재 회귀 테스트의 통과 여부는 [05의 검증 상태](./05-regression-verification/README.md#현재-검증-상태)에서 구분한다. 실제 두 JVM 기동·종료·복구 검증과 06의 측정 결과는 확인 필요다.
+
+300건 실제 측정을 기본 검증 범위로 채택하고, 통과하면 요청 수 또는 HTTP 동시성을 늘려 추가 부하를 측정한다. 통과 조건과 확대 기준은 [06의 측정 범위](./06-final-300-job-measurement/README.md#측정-범위와-확대-기준)를 따른다.
 
 ## 비범위
 
-Heartbeat, 메시지 브로커, 실제 Python AI Worker·GCS, SSE, ETA, 인증·운영 배포는 비범위다. 06의 300개 작업 측정도 진행하지 않는다.
+Heartbeat, 메시지 브로커, 실제 Python AI Worker·GCS, SSE, ETA, 인증·운영 배포는 비범위다.
