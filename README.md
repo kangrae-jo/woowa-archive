@@ -28,12 +28,15 @@
 |||
 
 ## Level 3
-| experience | pr |
+| experience | repository |
 |---|---|
-|||
+| setty | https://github.com/woowacourse-teams/2026-setty |
 
 ## Level 4
-| experience | pr |
+| experience | repository |
 |---|---|
+| setty | https://github.com/woowacourse-teams/2026-setty |
 | http | https://github.com/kangrae-jo/java-http |
+| spring mvc | https://github.com/kangrae-jo/java-mvc |
+| jdbc | https://github.com/kangrae-jo/java-jdbc |
 |||
