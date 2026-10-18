@@ -1,0 +1,46 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-18T12:53:51.396+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] c.k.dbqueue.server.WebServerApplication  : Starting WebServerApplication using Java 21.0.5 with PID 43192 (/Users/kangrae/Documents/GitHub/woowa-archive/technical-writing/build/classes/java/main started by kangrae in /Users/kangrae/Documents/GitHub/woowa-archive/technical-writing)
+2026-10-18T12:53:51.397+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] c.k.dbqueue.server.WebServerApplication  : No active profile set, falling back to 1 default profile: "default"
+2026-10-18T12:53:51.633+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-18T12:53:51.651+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 15 ms. Found 2 JPA repository interfaces.
+2026-10-18T12:53:51.822+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 51057 (http)
+2026-10-18T12:53:51.830+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-18T12:53:51.830+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-10-18T12:53:51.852+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-10-18T12:53:51.852+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 440 ms
+2026-10-18T12:53:51.916+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-18T12:53:51.941+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-10-18T12:53:51.954+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-18T12:53:52.060+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-18T12:53:52.071+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-18T12:53:52.247+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@727453a3
+2026-10-18T12:53:52.248+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-18T12:53:52.275+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 9.2
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-18T12:53:52.555+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-18T12:53:52.573+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-18T12:53:52.775+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 51057 (http) with context path '/'
+2026-10-18T12:53:52.779+09:00  INFO 43192 --- [db-polling-technical-writing] [           main] c.k.dbqueue.server.WebServerApplication  : Started WebServerApplication in 1.576 seconds (process running for 1.804)
+2026-10-18T12:53:53.003+09:00  INFO 43192 --- [db-polling-technical-writing] [.1-51057-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-18T12:53:53.003+09:00  INFO 43192 --- [db-polling-technical-writing] [.1-51057-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-18T12:53:53.004+09:00  INFO 43192 --- [db-polling-technical-writing] [.1-51057-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-10-18T12:57:10.570+09:00  INFO 43192 --- [db-polling-technical-writing] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-10-18T12:57:10.571+09:00  INFO 43192 --- [db-polling-technical-writing] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2026-10-18T12:57:10.574+09:00  INFO 43192 --- [db-polling-technical-writing] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-18T12:57:10.575+09:00  INFO 43192 --- [db-polling-technical-writing] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-18T12:57:10.577+09:00  INFO 43192 --- [db-polling-technical-writing] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

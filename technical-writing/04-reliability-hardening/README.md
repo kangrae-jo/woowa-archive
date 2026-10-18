@@ -145,7 +145,7 @@ Worker에는 영속 Entity나 LAZY proxy를 넘기지 않고 불변 `Job` DTO만
 
 등록 롤백, 조건부 선점, 결과 연결, 중복·오래된 token 거부, 만료·재시도·최대 시도, Scheduler 후속 Job 처리, web Context의 Worker Bean 미등록 테스트를 작성했다.
 
-2026-09-14 기준 전용 MySQL 테스트 DB에서 `./gradlew test --rerun-tasks`와 `./gradlew regressionTest --rerun-tasks`가 `BUILD SUCCESSFUL`로 종료됐다. 03 기준 구조의 `failureTest`는 다섯 RED assertion에서 의도대로 실패했다. 실제 독립 JVM 재시작·복구와 운영 MySQL의 잠금·격리 특성 일반화는 확인 필요다. H2로 대체하지 않았다.
+일반 테스트와 다섯 GREEN 회귀 테스트의 최신 실행 결과와 환경은 [05단계의 현재 검증 상태](../05-regression-verification/README.md#현재-검증-상태)를 참조한다. 별도 Web·Worker JVM의 정상 처리는 [06단계의 300건 실제 측정](../06-final-300-job-measurement/README.md#실제-측정-결과)에서 확인했다. 실제 독립 JVM 재시작·복구와 운영 MySQL의 잠금·격리 특성 일반화는 확인 필요다. H2로 대체하지 않았다.
 
 ## 비범위
 

@@ -1,0 +1,160 @@
+{
+  "startedAtKst": "2026-10-18T12:53:43.592189+09:00",
+  "commands": {
+    "build": [
+      "./gradlew",
+      "--offline",
+      "--no-daemon",
+      "--console=plain",
+      "--init-script",
+      "/private/tmp/woowa-dbqueue-measurement-20261018.WJWJIt/runtime.init.gradle",
+      "classes",
+      "exportQueueMeasurementRuntime"
+    ],
+    "mysql": [
+      "/opt/homebrew/bin/mysqld",
+      "--no-defaults",
+      "--datadir=/private/tmp/woowa-dbqueue-measurement-20261018.WJWJIt/mysql-data",
+      "--socket=/private/tmp/woowa-dbqueue-measurement-20261018.WJWJIt/mysql.sock",
+      "--pid-file=/private/tmp/woowa-dbqueue-measurement-20261018.WJWJIt/mysql.pid",
+      "--port=51056",
+      "--bind-address=127.0.0.1",
+      "--mysqlx=OFF",
+      "--skip-log-bin",
+      "--default-time-zone=+00:00",
+      "--innodb-buffer-pool-size=67108864",
+      "--log-error=/private/tmp/woowa-dbqueue-measurement-20261018.WJWJIt/mysql-server.log"
+    ],
+    "web": [
+      "/Users/kangrae/Library/Java/JavaVirtualMachines/corretto-21.0.5/Contents/Home/bin/java",
+      "-Xms128m",
+      "-Xmx512m",
+      "-cp",
+      "<Gradle sourceSets.main.runtimeClasspath>",
+      "com.kng0501.dbqueue.server.WebServerApplication",
+      "--server.port=51057"
+    ],
+    "worker": [
+      "/Users/kangrae/Library/Java/JavaVirtualMachines/corretto-21.0.5/Contents/Home/bin/java",
+      "-Xms128m",
+      "-Xmx512m",
+      "-cp",
+      "<Gradle sourceSets.main.runtimeClasspath>",
+      "com.kng0501.dbqueue.worker.ImageWorkerApplication",
+      "--db-queue.concurrency=8",
+      "--image-generator.delay=5s"
+    ],
+    "measurement": [
+      "/Users/kangrae/Library/Java/JavaVirtualMachines/corretto-21.0.5/Contents/Home/bin/java",
+      "-Xms128m",
+      "-Xmx512m",
+      "-cp",
+      "<Gradle sourceSets.main.runtimeClasspath>",
+      "com.kng0501.measurement.MeasurementApplication",
+      "--measurement.base-url=http://127.0.0.1:51057",
+      "--measurement.job-count=300",
+      "--measurement.request-concurrency=35",
+      "--measurement.timeout=10m",
+      "--measurement.polling-interval=1s",
+      "--measurement.expected-worker-concurrency=8",
+      "--measurement.expected-generator-delay=5s"
+    ]
+  },
+  "gitHead": "36bc836a1cfb16ad78961a4ba8747eb687abca92",
+  "workingTreeBeforeRun": [
+    "M 04-reliability-hardening/README.md",
+    " M 05-regression-verification/README.md",
+    " M blog-draft/02-options.md",
+    " M blog-draft/03-implementation.md",
+    " M blog-draft/04-results.md",
+    " M blog-draft/README.md"
+  ],
+  "sourceSha256": {
+    "src/main/resources/application.yml": "a310d1b83926659439291f3cc8ffeb075756ff6f9585fceacaa77e1f7bccac67",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/WebServerApplication.java": "b2d179a7025b5333107d188b011d8701096f22e37b9d2d8d20450cf2ec3054e9",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/application/JobQueryService.java": "24702f754364ac15c3daad906857d617d4b3e2d357e36e578d1f6b8422d03156",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/application/JobRegistrationService.java": "a60bf0d2140902b904b67e0e9f745ec9aa59767e54a653a636027c9508c04149",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/domain/JobQueryResult.java": "fb7910d08d28b451e6490c1af671f2339e869529d890289aea9f858ef4b0b108",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/domain/JobStatus.java": "ff5fc1fe00234d1ae712be858046ce7b49092a35221d833b72b367d2e2e95aae",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/persistence/entity/ImageGenerationJobEntity.java": "0cbf2fd99a4dc960e4fc19da5ec7f7446a1ce784f0914119450eb3131943380d",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/persistence/entity/MonsterEntity.java": "15a8d67ecb47a17c32e19e8e7aced781477831e720a7409411e6cfcc9d11f205",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/persistence/entity/UuidStringConverter.java": "268ff52dd4b7437ce2e4e26956a3d008f8a9f8c7012faee8713e6a0fae6db145",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/persistence/jpa/ImageGenerationJobJpaRepository.java": "20a96fddb2ab9681349aaea947b4bf89adeb25a6c066ee3209e8698ae058f38b",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/persistence/jpa/MonsterJpaRepository.java": "83edfd171483706c339a577fee2481b6a0f4e6c97757e15939262bc903fe7165",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/presentation/ApiErrorResponse.java": "cbc5efafceafae864cd5a0895fb1fbbd360a7a2c9fcb98bddd58513bdea001e4",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/presentation/CreateJobRequest.java": "fc04c47d020909b5310207ce9d78e3ec4b2367ac282b65a148cc5ceee5ca412a",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/presentation/JobController.java": "4c1aa10e0bc63cd0f3fa92e0269699224f2fba14dedb19e83e948b6d495e2572",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/server/presentation/WebExceptionHandler.java": "2b8d99c3541c6700b450dcac3e6b7ba98721ca5223104bbb4c7495f67575a6e8",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/ImageWorkerApplication.java": "956c770de692d1a5d6ec0b7ac7b5011098c401d5349fd0f4ad3a985709cab3c9",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/ExpiredJobRecovery.java": "f91b813f01dfbebc48aa9db94032dfde4ec6ceaf02590615545a39fa6df32bbd",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/ExpiredJobTransition.java": "87267a74d5a6d394c7a6ebfc8aff757303420cc0b63df5ae687ebda3a0c2921d",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/JobPollingTasks.java": "54a49bfa0a490bba174e8f50e26ccb13d68a20924f9a23925f3ed41b7baa1231",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/JobQueue.java": "fae9d6f4bf7036b70d7d4fd12ad8b6d36418eac7edba94e47cf872483005073e",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/JobScheduler.java": "50e08c1a3435ce2fe38987df33c1f9d22d2e02656c5c8b158b1f4c6ecc77d936",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/JobWorker.java": "1d9b8b6b8326d3558d52a60066dc2087f2da74b6bc2cfdccda4fb3d4f9cfa055",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/MockImageGenerator.java": "d814b772e740aa7ad1e629a9ee17a77aad5ea3f7dc7f7f8cadd039268cddaf48",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/MockImageGeneratorSettings.java": "50452e63d522cbbbc630d4562bfb736a13819dd44a351f9a533772d361c59b80",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/domain/ImageGenerator.java": "6852814b3d4db12aed304a233613c023553e1d725535edddd7d2b1a6d58c042b",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/domain/Job.java": "7553771218ab855a27cca781a32ad470c27337cedb7ab231832ebeced770626a",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/domain/JobStatus.java": "5e2dae14d49d9818065bae3d57f6e9ad33a5aa2fd894620279c0eb8d828dcf9c",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/domain/QueueSettings.java": "ce26d528b99eaa61dca524f33677367e0e5463b328c6967d116d5f969e514c02",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/persistence/ImageResultUpdater.java": "478f23ad5815d730d24afec720442c636df531f970cb48b9ad37d7874dcb5d33",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/persistence/entity/ImageGenerationJobEntity.java": "5aad0748107e6dab190ce9338d2ecba48565455b81ca740e43b96fd4bcf87c7f",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/persistence/entity/UuidStringConverter.java": "83b6a02495a0c32a22e023d35244acec1eb833c463f87721589c3718802bd17a",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/persistence/jpa/ImageGenerationJobJpaRepository.java": "6a307ec7cf3d8dd375475f5e944a3eba2ee4e6d5c79c50971e8d13afda10e0b5",
+    "04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/persistence/jpa/JobProjection.java": "c1504ecd65892546e82efe7149d66e5c539bb21772f3004a615ec90242856b72",
+    "04-reliability-hardening/src/main/resources/db/04/schema.sql": "a2237ba31da6159399554a0b5928cc20bb03df41ab2b6d9a16e204c108ffd8b8",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/EnvironmentReport.java": "7b8e1e7cd3846de3e3f969e9e4d905ae3127fef50064e87da72fc315fc50596f",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/HttpJobClient.java": "d7e35b9555b5d9e2f6bb86c5323718e12c3d066a874165ec5fe275734479d0c1",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/JobStatus.java": "bc11d0c75b29694105dc2d2260ba3841753a30bed2f52a9f8bd63d30ec065c65",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/LatencyPercentiles.java": "e4321f0ac2f92bd75ce67473f3fda1b73c20fd2f55fff3c268dd029a1a9542c7",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/MeasurementApplication.java": "f83a683324f0bc4d15493736d191bb8b50d80a8b00bd25e2a7bbfa3a1417af16",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/MeasurementDatabase.java": "cce724db187d730477a48b27c8101dcbfea523f04b320203c9b7b871ce755ea4",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/MeasurementProperties.java": "08e6bba3f5b3c2b50d7b67514aaa757484d1f36e8aacd63d5f65bac2c04dbda7",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/MeasurementResultWriter.java": "27558b279331760abb0934c2efca72e18022be4ff700bb45a8e5c20516d9ea77",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/MeasurementRunner.java": "8f8d6c7e5888e37d361ebac9fe6b20f599c1594c9767c888b02a59d7d1a78371",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/MeasurementSummary.java": "6758dd5b39583c0b0b9129f1ecbc1789243af196c9de119760e50f2bbe5e2d0c",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/MeasurementSummaryCalculator.java": "b8ceb724d40e7fa35a24d398c14c3763871e215461d3326fb00f8e35dd4cfa88",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/ObservedJob.java": "45794e5df52bb94dfefba07230fdcb63363838072f64893bdcdc19c1d1c6dab1",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/Percentiles.java": "53f4080500821a0ac9ff81425dc3abb14bc24d77f384d4c3da6a9222e6176731",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/QueueDepthMonitor.java": "79305cffe92983ccc8cac0d5f11671d529a4bd76d930aea2f5411ce0250b0a5e",
+    "06-final-300-job-measurement/src/main/java/com/kng0501/measurement/RequestRecord.java": "d876e2116855bf8b591733b3bc23687143aa045eb73a5b90bccbc64e673021ba"
+  },
+  "hardware": {
+    "memoryBytes": "8589934592",
+    "logicalCpuCount": "8",
+    "cpu": "Apple M3"
+  },
+  "processes": {
+    "mysql": {
+      "pid": 43184,
+      "exitCodeAfterCleanup": 0
+    },
+    "web": {
+      "pid": 43192,
+      "exitCodeAfterCleanup": 143
+    },
+    "worker": {
+      "pid": 43193,
+      "exitCodeAfterCleanup": 143
+    },
+    "measurement": {
+      "pid": 43195,
+      "exitCodeAfterCleanup": 0
+    }
+  },
+  "mysqlSettings": {
+    "version": "9.2.0",
+    "globalTimeZone": "+00:00",
+    "maxConnections": 151,
+    "transactionIsolation": "REPEATABLE-READ",
+    "innodbBufferPoolBytes": 67108864
+  },
+  "emptyTableCountsBeforeMeasurement": "0\t0",
+  "measurementExitCode": 0,
+  "resultDirectory": "06-final-300-job-measurement/results/04a01500-aafe-44be-a619-9c4a1ad2b72b",
+  "passed": true,
+  "verificationCheckCount": 36,
+  "finishedAtKst": "2026-10-18T12:57:11.387101+09:00",
+  "allStartedProcessesStopped": true
+}

@@ -1,0 +1,39 @@
+{
+  "runId" : "04a01500-aafe-44be-a619-9c4a1ad2b72b",
+  "startedAt" : "2026-10-18T03:53:55.677217Z",
+  "finishedAt" : "2026-10-18T03:57:09.804408Z",
+  "allAcceptedJobsTerminal" : true,
+  "totalCompletionMillis" : 193639,
+  "observedDurationMillis" : 194127,
+  "requestCount" : 300,
+  "http202Count" : 300,
+  "httpFailureCount" : 0,
+  "uniqueJobIdCount" : 300,
+  "duplicateJobIdCount" : 0,
+  "succeededCount" : 300,
+  "failedCount" : 0,
+  "pendingCount" : 0,
+  "runningCount" : 0,
+  "unfinishedCount" : 0,
+  "missingAcceptedJobCount" : 0,
+  "succeededWithoutImageCount" : 0,
+  "misconnectedResultCount" : 0,
+  "retriedJobCount" : 0,
+  "additionalAttemptCount" : 0,
+  "maximumPendingCount" : 295,
+  "requestLatency" : {
+    "p50Millis" : 20,
+    "p95Millis" : 160,
+    "p99Millis" : 173
+  },
+  "jobWaitingTime" : {
+    "p50Millis" : 91719,
+    "p95Millis" : 178087,
+    "p99Millis" : 188270
+  },
+  "jobProcessingTime" : {
+    "p50Millis" : 5007,
+    "p95Millis" : 5016,
+    "p99Millis" : 5038
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "runId" : "04a01500-aafe-44be-a619-9c4a1ad2b72b",
+  "startedAt" : "2026-10-18T03:53:55.677217Z",
+  "baseUrl" : "http://127.0.0.1:51057",
+  "databaseName" : "technical_writing_measurement",
+  "jobCount" : 300,
+  "requestConcurrency" : 35,
+  "timeout" : "PT10M",
+  "pollingInterval" : "PT1S",
+  "expectedWorkerConcurrency" : 8,
+  "expectedGeneratorDelay" : "PT5S",
+  "javaVersion" : "21.0.5",
+  "osName" : "Mac OS X",
+  "osVersion" : "15.2",
+  "osArchitecture" : "aarch64",
+  "mysqlVersion" : "9.2.0"
+}

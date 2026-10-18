@@ -1,0 +1,11 @@
+{
+  "jobCount": 300,
+  "monsterCount": 300,
+  "succeededCount": 300,
+  "attemptCountSum": 300,
+  "jobsWithLastError": 0,
+  "invalidFinalClaims": 0,
+  "imagesMatchingPrompt": 300,
+  "jobsWithoutFinishedAt": 0,
+  "danglingMonsterReferences": 0
+}

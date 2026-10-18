@@ -1,0 +1,36 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-18T12:53:53.402+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] c.k.d.worker.ImageWorkerApplication      : Starting ImageWorkerApplication using Java 21.0.5 with PID 43193 (/Users/kangrae/Documents/GitHub/woowa-archive/technical-writing/build/classes/java/main started by kangrae in /Users/kangrae/Documents/GitHub/woowa-archive/technical-writing)
+2026-10-18T12:53:53.402+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] c.k.d.worker.ImageWorkerApplication      : No active profile set, falling back to 1 default profile: "default"
+2026-10-18T12:53:53.574+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-18T12:53:53.597+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 20 ms. Found 1 JPA repository interface.
+2026-10-18T12:53:53.713+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-18T12:53:53.727+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-10-18T12:53:53.736+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-18T12:53:53.815+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-18T12:53:53.823+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-18T12:53:53.972+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1537c744
+2026-10-18T12:53:53.972+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-18T12:53:53.996+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 9.2
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-18T12:53:54.232+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-18T12:53:54.246+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-18T12:53:54.336+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-10-18T12:53:54.731+09:00  INFO 43193 --- [db-polling-technical-writing] [           main] c.k.d.worker.ImageWorkerApplication      : Started ImageWorkerApplication in 1.494 seconds (process running for 1.629)
+2026-10-18T12:57:10.534+09:00  INFO 43193 --- [db-polling-technical-writing] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-18T12:57:10.537+09:00  INFO 43193 --- [db-polling-technical-writing] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-18T12:57:10.543+09:00  INFO 43193 --- [db-polling-technical-writing] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

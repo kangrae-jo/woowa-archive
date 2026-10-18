@@ -73,7 +73,21 @@ DB 접속·Context 초기화·JPA 매핑 오류는 회귀 검증 성공이 아�
 
 ## 현재 검증 상태
 
-위 표는 과거 실행 기록이다. 로컬에 남아 있는 2026-09-15 회귀 테스트 보고서는 5건 중 `ScheduledPollingIntegrationTest` 1건의 실패를 기록한다. 실패 내용은 후속 Job이 제한 시간 안에 완료되지 않았다는 assertion이다. 현재 코드의 통과 여부는 `./gradlew regressionTest --rerun-tasks`로 재확인해야 한다. 이 상태에서는 다섯 GREEN 검증이 현재 모두 통과한다고 판단하지 않는다.
+2026-10-15 20:35(KST)에 Java 21과 임시 MySQL 9.2.0 인스턴스의 전용 `technical_writing_test` DB에서 다음 명령을 실행했다. 테스트 DB 접속 환경변수는 해당 실행에만 설정했으며, 검증 후 임시 MySQL을 종료했다. 애플리케이션 코드와 테스트 코드는 수정하지 않았다.
+
+```bash
+./gradlew --offline --no-daemon --console=plain test regressionTest --rerun-tasks --continue
+```
+
+| 작업 | 실행 | 실패 | 오류 | 건너뜀 | 판정 |
+| --- | --- | --- | --- | --- | --- |
+| `test` | 33건 | 0건 | 0건 | 0건 | 통과 |
+| `regressionTest` | 5건 | 0건 | 0건 | 0건 | 통과 |
+| 합계 | 38건 | 0건 | 0건 | 0건 | `BUILD SUCCESSFUL` · 종료 코드 `0` |
+
+**채택:** 이번 실행 기준으로 일반 테스트와 다섯 GREEN 회귀 테스트가 모두 통과했다. 이전에 실패한 `ScheduledPollingIntegrationTest`의 후속 Job 완료 assertion과 일반 테스트의 결과 저장 실패 롤백 assertion도 통과했다. 실행 후 생성되는 로컬 HTML 보고서는 `build/reports/tests/test/index.html`과 `build/reports/tests/regressionTest/index.html`에서 확인한다.
+
+2026-09-15에는 후속 Job이 제한 시간 안에 완료되지 않았다는 실패 기록이 있었다. 이번 재실행의 통과만으로 당시 실패 원인까지 확정하지는 않는다. 과거 실패 원인은 확인 필요다. 의도적인 실패 재현 작업인 `failureTest`는 이번 실행에 포함하지 않았다.
 
 ## 비범위
 

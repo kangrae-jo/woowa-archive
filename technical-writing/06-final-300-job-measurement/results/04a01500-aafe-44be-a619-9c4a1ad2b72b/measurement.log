@@ -1,0 +1,19 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-18T12:53:55.183+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] c.k.measurement.MeasurementApplication   : Starting MeasurementApplication using Java 21.0.5 with PID 43195 (/Users/kangrae/Documents/GitHub/woowa-archive/technical-writing/build/classes/java/main started by kangrae in /Users/kangrae/Documents/GitHub/woowa-archive/technical-writing)
+2026-10-18T12:53:55.184+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] c.k.measurement.MeasurementApplication   : No active profile set, falling back to 1 default profile: "default"
+2026-10-18T12:53:55.562+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] c.k.measurement.MeasurementApplication   : Started MeasurementApplication in 0.535 seconds (process running for 0.658)
+2026-10-18T12:53:55.564+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-18T12:53:55.667+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7affc159
+2026-10-18T12:53:55.668+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-18T12:57:09.845+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] c.kng0501.measurement.MeasurementRunner  : measurement completed: run_id=04a01500-aafe-44be-a619-9c4a1ad2b72b succeeded=300 failed=0 unfinished=0 missing=0 retried=0
+2026-10-18T12:57:09.849+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-18T12:57:09.851+09:00  INFO 43195 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

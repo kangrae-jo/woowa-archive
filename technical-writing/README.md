@@ -30,9 +30,9 @@ MySQL만 두 프로세스 사이에서 공유한다. Server와 Worker는 Java �
 | [01](./01-past-structure-and-limitations/README.md) | 과거 경험과 측정 한계 기록 | 완료 |
 | [02](./02-minimal-db-polling/README.md) | 정상 상황의 최소 DB Polling | MySQL 자동 테스트 통과·두 JVM 검증 확인 필요 |
 | [03](./03-failure-reproduction/README.md) | 기준 구현의 잠재적 실패 5개 RED 재현 | MySQL RED assertion 5건 확인 |
-| [04](./04-reliability-hardening/README.md) | 상태·선점·재시도·복구·멱등성 추가 | MySQL 자동 테스트 통과·두 JVM 검증 확인 필요 |
-| [05](./05-regression-verification/README.md) | 03 RED 불변식의 04 GREEN 회귀 검증 | 회귀 테스트 작성 완료·현재 통과 여부 확인 필요 |
-| [06](./06-final-300-job-measurement/README.md) | 300건 기본 검증·통과 후 추가 부하 측정 | 환경 준비 완료·300건 실행 예정 |
+| [04](./04-reliability-hardening/README.md) | 상태·선점·재시도·복구·멱등성 추가 | MySQL 자동 테스트·별도 JVM 300건 정상 처리 확인. 재시작 복구는 확인 필요 |
+| [05](./05-regression-verification/README.md) | 03 RED 불변식의 04 GREEN 회귀 검증 | [2026-10-15 일반 33건·GREEN 5건 통과](./05-regression-verification/README.md#현재-검증-상태) |
+| [06](./06-final-300-job-measurement/README.md) | 300건 기본 검증·통과 후 추가 부하 측정 | [2026-10-18 300건 통과·결과 기록 완료](./06-final-300-job-measurement/README.md#실제-측정-결과). 추가 부하는 미실행 |
 
 ## Application 구조
 
@@ -52,7 +52,7 @@ Spring Profile은 역할이나 구현 버전을 선택하는 데 사용하지 �
 | DB | 같은 로컬 MySQL URL | 각 JVM은 별도 Hikari Pool 소유 |
 | 요청 | `POST /jobs` JSON `{ "prompt": "..." }` | 02 응답에는 Job 상태 없음 |
 | Polling 간격 | 100ms | 관찰용 초기값 |
-| 워커 동시 처리 | 1 | 테스트는 제어 목적으로 별도 값을 사용 가능 |
+| 워커 동시 처리 | 1 | 자동 테스트와 06 측정은 목적에 맞는 별도 값을 사용 |
 | 모의 이미지 생성 | 5초 후 `image:{prompt}` | 실제 AI 성능 측정값 아님 |
 | 처리 기한 | hardened 30초 | 5초 모의 생성보다 길게 둔 실습용 값 |
 
@@ -159,9 +159,9 @@ curl -i -X POST http://127.0.0.1:8080/jobs \
 | `./gradlew failureTest --rerun-tasks` | RED 테스트 5건이 의도한 assertion에서 실패. 종료 코드 `1`은 기대 결과 |
 | `./gradlew regressionTest --rerun-tasks` | GREEN 테스트 5건 통과. `BUILD SUCCESSFUL` |
 
-전용 MySQL 테스트 DB에서 자동 테스트를 실행했다. H2 대체나 테스트 생략은 하지 않았다. 현재 회귀 테스트의 통과 여부는 [05의 검증 상태](./05-regression-verification/README.md#현재-검증-상태)에서 구분한다. 실제 두 JVM 기동·종료·복구 검증과 06의 측정 결과는 확인 필요다.
+전용 MySQL 테스트 DB에서 자동 테스트를 실행했다. H2 대체나 테스트 생략은 하지 않았다. 일반·회귀 테스트의 최신 실행 결과는 [05의 검증 상태](./05-regression-verification/README.md#현재-검증-상태)를 따른다. 2026-10-18에는 별도 Web·Worker·Measurement JVM에서 [300건 기본 측정](./06-final-300-job-measurement/README.md#실제-측정-결과)을 통과하고 원본 결과를 저장했다. 실제 프로세스 재시작·복구 검증은 확인 필요다.
 
-300건 실제 측정을 기본 검증 범위로 채택하고, 통과하면 요청 수 또는 HTTP 동시성을 늘려 추가 부하를 측정한다. 통과 조건과 확대 기준은 [06의 측정 범위](./06-final-300-job-measurement/README.md#측정-범위와-확대-기준)를 따른다.
+300건 기본 검증은 완료했고, 요청 수 또는 HTTP 동시성을 늘리는 추가 부하는 미실행이다. 통과 조건과 확대 기준은 [06의 측정 범위](./06-final-300-job-measurement/README.md#측정-범위와-확대-기준)를 따른다.
 
 ## 비범위
 
