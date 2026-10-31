@@ -1,0 +1,269 @@
+{
+  "runId": "1e8aec76-1ca1-4c51-9501-d7da0b9a5591",
+  "checkedAt": "2026-10-31T15:37:59.160292+00:00",
+  "passed": true,
+  "checkCount": 36,
+  "recomputedSummary": {
+    "requestCount": 1500,
+    "http202Count": 1500,
+    "httpFailureCount": 0,
+    "uniqueJobIdCount": 1500,
+    "duplicateJobIdCount": 0,
+    "succeededCount": 1500,
+    "failedCount": 0,
+    "pendingCount": 0,
+    "runningCount": 0,
+    "unfinishedCount": 0,
+    "missingAcceptedJobCount": 0,
+    "succeededWithoutImageCount": 0,
+    "misconnectedResultCount": 0,
+    "retriedJobCount": 0,
+    "additionalAttemptCount": 0,
+    "allAcceptedJobsTerminal": true,
+    "totalCompletionMillis": 956456,
+    "observedDurationMillis": 958121
+  },
+  "loadProfile": {
+    "expectedRequestCount": 1500,
+    "targetDurationMillis": 180000,
+    "targetIntervalMillis": 120,
+    "timestampedRequestCount": 1500,
+    "firstStartOffsetMillis": 6.6129999999999995,
+    "lastStartOffsetMillis": 179893.84100000001,
+    "firstToLastStartMillis": 179887.228,
+    "actualStartIntervalMillis": {
+      "p50Millis": 120.012,
+      "p95Millis": 124.217,
+      "p99Millis": 126.997,
+      "minMillis": 79.477,
+      "maxMillis": 155.84300000000002
+    },
+    "scheduleDeviationFromFirstActualStartMillis": {
+      "p50Millis": 5.349999999998545,
+      "p95Millis": 7.195999999996275,
+      "p99Millis": 11.105999999999767,
+      "minMillis": 0.0,
+      "maxMillis": 44.062000000005355
+    },
+    "scheduleDeviationNote": "Signed deviation from first actual request plus request index times target interval. Informational; no scheduling tolerance is added to acceptance."
+  },
+  "checks": [
+    {
+      "name": "summary.requestCount",
+      "actual": 1500,
+      "expected": 1500,
+      "passed": true
+    },
+    {
+      "name": "summary.http202Count",
+      "actual": 1500,
+      "expected": 1500,
+      "passed": true
+    },
+    {
+      "name": "summary.httpFailureCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.uniqueJobIdCount",
+      "actual": 1500,
+      "expected": 1500,
+      "passed": true
+    },
+    {
+      "name": "summary.duplicateJobIdCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.succeededCount",
+      "actual": 1500,
+      "expected": 1500,
+      "passed": true
+    },
+    {
+      "name": "summary.failedCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.pendingCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.runningCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.unfinishedCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.missingAcceptedJobCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.succeededWithoutImageCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.misconnectedResultCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.retriedJobCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.additionalAttemptCount",
+      "actual": 0,
+      "expected": 0,
+      "passed": true
+    },
+    {
+      "name": "summary.allAcceptedJobsTerminal",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "summary.totalCompletionMillis",
+      "actual": 956456,
+      "expected": 956456,
+      "passed": true
+    },
+    {
+      "name": "summary.observedDurationMillis",
+      "actual": 958121,
+      "expected": 958121,
+      "passed": true
+    },
+    {
+      "name": "summary.requestLatency.p50Millis",
+      "actual": 7,
+      "expected": 7,
+      "passed": true
+    },
+    {
+      "name": "summary.requestLatency.p95Millis",
+      "actual": 18,
+      "expected": 18,
+      "passed": true
+    },
+    {
+      "name": "summary.requestLatency.p99Millis",
+      "actual": 73,
+      "expected": 73,
+      "passed": true
+    },
+    {
+      "name": "summary.jobWaitingTime.p50Millis",
+      "actual": 384168,
+      "expected": 384168,
+      "passed": true
+    },
+    {
+      "name": "summary.jobWaitingTime.p95Millis",
+      "actual": 734125,
+      "expected": 734125,
+      "passed": true
+    },
+    {
+      "name": "summary.jobWaitingTime.p99Millis",
+      "actual": 763319,
+      "expected": 763319,
+      "passed": true
+    },
+    {
+      "name": "summary.jobProcessingTime.p50Millis",
+      "actual": 5006,
+      "expected": 5006,
+      "passed": true
+    },
+    {
+      "name": "summary.jobProcessingTime.p95Millis",
+      "actual": 5014,
+      "expected": 5014,
+      "passed": true
+    },
+    {
+      "name": "summary.jobProcessingTime.p99Millis",
+      "actual": 5023,
+      "expected": 5023,
+      "passed": true
+    },
+    {
+      "name": "request_latency_csv.matches_jobs_csv",
+      "actualRows": 1500,
+      "expectedRows": 1500,
+      "passed": true
+    },
+    {
+      "name": "request_numbers.cover_expected_range",
+      "uniqueCount": 1500,
+      "expectedCount": 1500,
+      "passed": true
+    },
+    {
+      "name": "unique_monster_ids",
+      "actual": 1500,
+      "expected": 1500,
+      "passed": true
+    },
+    {
+      "name": "csv.job_wait_ms.recomputed",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "csv.processing_ms.recomputed",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "csv.expected_image.matches_prompt",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "csv.result_misconnected.flags",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "csv.missing_from_db.flags",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "csv.timestamps.ordered",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    }
+  ],
+  "scope": "CSV/summary reconciliation only; maximumPendingCount requires progress samples and database state is verified separately."
+}

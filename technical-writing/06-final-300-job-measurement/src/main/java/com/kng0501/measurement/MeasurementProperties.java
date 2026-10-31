@@ -11,6 +11,7 @@ public final class MeasurementProperties {
     private String baseUrl = "http://127.0.0.1:8080";
     private int jobCount = 300;
     private int requestConcurrency = 35;
+    private Duration requestInterval = Duration.ZERO;
     private Duration timeout = Duration.ofMinutes(10);
     private Duration pollingInterval = Duration.ofSeconds(1);
     private Path outputDirectory = Path.of("06-final-300-job-measurement", "results");
@@ -32,6 +33,9 @@ public final class MeasurementProperties {
         }
         requirePositive(timeout, "measurement.timeout");
         requirePositive(pollingInterval, "measurement.polling-interval");
+        if (requestInterval == null || requestInterval.isNegative()) {
+            throw new IllegalArgumentException("measurement.request-interval은 0 이상이어야 합니다.");
+        }
         if (expectedWorkerConcurrency < 1) {
             throw new IllegalArgumentException("measurement.expected-worker-concurrency는 1 이상이어야 합니다.");
         }
@@ -90,6 +94,14 @@ public final class MeasurementProperties {
 
     public Duration getTimeout() {
         return timeout;
+    }
+
+    public Duration getRequestInterval() {
+        return requestInterval;
+    }
+
+    public void setRequestInterval(final Duration requestInterval) {
+        this.requestInterval = requestInterval;
     }
 
     public void setTimeout(final Duration timeout) {

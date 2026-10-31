@@ -16,7 +16,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -77,6 +79,7 @@ public class MeasurementRunner implements ApplicationRunner {
                 databaseName,
                 properties.getJobCount(),
                 properties.getRequestConcurrency(),
+                properties.getRequestInterval(),
                 properties.getTimeout(),
                 properties.getPollingInterval(),
                 properties.getExpectedWorkerConcurrency(),
@@ -99,8 +102,8 @@ public class MeasurementRunner implements ApplicationRunner {
         );
     }
 
-    private List<RequestRecord> registerJobs(final String runId, final Instant deadline) {
-        final ExecutorService executor = Executors.newFixedThreadPool(
+    List<RequestRecord> registerJobs(final String runId, final Instant deadline) {
+        final ScheduledExecutorService executor = Executors.newScheduledThreadPool(
                 properties.getRequestConcurrency(),
                 Thread.ofPlatform().name("measurement-request-", 0).factory()
         );
@@ -189,7 +192,7 @@ public class MeasurementRunner implements ApplicationRunner {
     }
 
     private List<Future<RequestRecord>> invokeAll(
-            final ExecutorService executor,
+            final ScheduledExecutorService executor,
             final List<RequestPlan> plans,
             final Instant deadline
     ) {
@@ -198,7 +201,34 @@ public class MeasurementRunner implements ApplicationRunner {
                 .<Callable<RequestRecord>>map(plan -> () -> jobs.register(plan.requestNumber(), plan.prompt()))
                 .toList();
         try {
-            return executor.invokeAll(tasks, remainingNanos, TimeUnit.NANOSECONDS);
+            if (properties.getRequestInterval().isZero()) {
+                return executor.invokeAll(tasks, remainingNanos, TimeUnit.NANOSECONDS);
+            }
+            final long startedNanos = System.nanoTime();
+            final List<Future<RequestRecord>> futures = new ArrayList<>();
+            for (int index = 0; index < tasks.size(); index++) {
+                final long scheduledNanos = properties.getRequestInterval().multipliedBy(index).toNanos();
+                final long delayNanos = Math.max(0, scheduledNanos - (System.nanoTime() - startedNanos));
+                futures.add(executor.schedule(tasks.get(index), delayNanos, TimeUnit.NANOSECONDS));
+            }
+            try {
+                for (final Future<RequestRecord> future : futures) {
+                    try {
+                        future.get(Math.max(0, remainingNanos - (System.nanoTime() - startedNanos)), TimeUnit.NANOSECONDS);
+                    } catch (final ExecutionException exception) {
+                        // Preserve the failed Future for awaitRequest() to report its cause.
+                    } catch (final TimeoutException exception) {
+                        break;
+                    }
+                }
+                return futures;
+            } finally {
+                for (final Future<RequestRecord> future : futures) {
+                    if (!future.isDone()) {
+                        future.cancel(true);
+                    }
+                }
+            }
         } catch (final InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Job 등록 요청 실행이 중단됐습니다.", exception);

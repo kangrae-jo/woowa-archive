@@ -31,7 +31,7 @@ final class MeasurementResultWriterTest {
         );
         final EnvironmentReport environment = new EnvironmentReport(
                 "run-1", now, "http://127.0.0.1:8080", "technical_writing_measurement",
-                300, 35, Duration.ofMinutes(10), Duration.ofSeconds(1), 8, Duration.ofSeconds(5),
+                300, 35, Duration.ZERO, Duration.ofMinutes(10), Duration.ofSeconds(1), 8, Duration.ofSeconds(5),
                 "21.0.8", "Mac OS X", "15.6", "aarch64", "8.4.6"
         );
         final RequestRecord request = new RequestRecord(

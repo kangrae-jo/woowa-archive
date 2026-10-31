@@ -45,4 +45,14 @@ final class MeasurementPropertiesTest {
         credentialUrl.setBaseUrl("http://user:password@127.0.0.1:8080");
         assertThrows(IllegalArgumentException.class, credentialUrl::validate);
     }
+
+    @Test
+    void 요청_투입_간격은_0_또는_양수이고_음수는_거부한다() {
+        final MeasurementProperties properties = new MeasurementProperties();
+        properties.setRequestInterval(Duration.ofMillis(120));
+        assertDoesNotThrow(properties::validate);
+
+        properties.setRequestInterval(Duration.ofMillis(-1));
+        assertThrows(IllegalArgumentException.class, properties::validate);
+    }
 }

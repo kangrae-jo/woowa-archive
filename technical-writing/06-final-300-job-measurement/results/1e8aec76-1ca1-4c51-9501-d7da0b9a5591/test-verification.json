@@ -1,0 +1,47 @@
+{
+  "command": "./gradlew --offline --no-daemon --console=plain --init-script <runtime.init.gradle> test --tests com.kng0501.measurement.* exportQueueMeasurementRuntime --rerun-tasks",
+  "suites": [
+    {
+      "class": "com.kng0501.measurement.MeasurementPropertiesTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.kng0501.measurement.MeasurementResultWriterTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.kng0501.measurement.MeasurementRunnerTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.kng0501.measurement.MeasurementSummaryCalculatorTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "class": "com.kng0501.measurement.PercentilesTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "allPassed": true
+}

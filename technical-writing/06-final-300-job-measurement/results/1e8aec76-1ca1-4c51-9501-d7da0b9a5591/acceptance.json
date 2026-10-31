@@ -1,0 +1,55 @@
+{
+  "runId": "1e8aec76-1ca1-4c51-9501-d7da0b9a5591",
+  "checkedAt": "2026-10-31T15:37:59.160292+00:00",
+  "allPassed": true,
+  "criteria": {
+    "requests_started_within_submission_window": true,
+    "expected_request_count": true,
+    "all_requests_accepted_202": true,
+    "unique_job_ids": true,
+    "unique_monster_ids": true,
+    "post_p95_within_limit": true,
+    "all_jobs_succeeded": true,
+    "no_failed_unfinished_or_missing": true,
+    "no_wrong_or_absent_images": true,
+    "all_complete_within_deadline": true,
+    "independent_artifact_checks_passed": true
+  },
+  "thresholds": {
+    "requestCount": 1500,
+    "submissionDurationSeconds": 180,
+    "targetIntervalMillis": 120,
+    "postP95LimitMillis": 500,
+    "completionDeadlineMillis": 1200000
+  },
+  "observed": {
+    "postP95Millis": 18,
+    "totalCompletionMillis": 956456,
+    "loadProfile": {
+      "expectedRequestCount": 1500,
+      "targetDurationMillis": 180000,
+      "targetIntervalMillis": 120,
+      "timestampedRequestCount": 1500,
+      "firstStartOffsetMillis": 6.6129999999999995,
+      "lastStartOffsetMillis": 179893.84100000001,
+      "firstToLastStartMillis": 179887.228,
+      "actualStartIntervalMillis": {
+        "p50Millis": 120.012,
+        "p95Millis": 124.217,
+        "p99Millis": 126.997,
+        "minMillis": 79.477,
+        "maxMillis": 155.84300000000002
+      },
+      "scheduleDeviationFromFirstActualStartMillis": {
+        "p50Millis": 5.349999999998545,
+        "p95Millis": 7.195999999996275,
+        "p99Millis": 11.105999999999767,
+        "minMillis": 0.0,
+        "maxMillis": 44.062000000005355
+      },
+      "scheduleDeviationNote": "Signed deviation from first actual request plus request index times target interval. Informational; no scheduling tolerance is added to acceptance."
+    },
+    "retriedJobCount": 0
+  },
+  "retryNote": "Retries are reported separately and are not an additional agreed pass/fail threshold."
+}

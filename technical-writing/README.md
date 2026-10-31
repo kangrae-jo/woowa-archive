@@ -2,7 +2,7 @@
 
 [문서 작성 계획서](./WRITING_PLAN.md)에서 글의 주제·대상 독자·목차·시각 자료 계획을 관리한다.
 
-[블로그 초안](./blog-draft/README.md)은 계획서의 다섯 목차별 파일로 작성한다.
+[블로그 초안](./blog-draft/README.md)은 계획서의 다섯 목차별 파일과 300건 측정 및 1,500건 추가 부하 검증을 설명하는 보충편으로 작성한다.
 
 ## 결론
 
@@ -32,7 +32,7 @@ MySQL만 두 프로세스 사이에서 공유한다. Server와 Worker는 Java �
 | [03](./03-failure-reproduction/README.md) | 기준 구현의 잠재적 실패 5개 RED 재현 | MySQL RED assertion 5건 확인 |
 | [04](./04-reliability-hardening/README.md) | 상태·선점·재시도·복구·멱등성 추가 | MySQL 자동 테스트·별도 JVM 300건 정상 처리 확인. 재시작 복구는 확인 필요 |
 | [05](./05-regression-verification/README.md) | 03 RED 불변식의 04 GREEN 회귀 검증 | [2026-10-15 일반 33건·GREEN 5건 통과](./05-regression-verification/README.md#현재-검증-상태) |
-| [06](./06-final-300-job-measurement/README.md) | 300건 기본 검증·통과 후 추가 부하 측정 | [2026-10-18 300건 통과·결과 기록 완료](./06-final-300-job-measurement/README.md#실제-측정-결과). 추가 부하는 미실행 |
+| [06](./06-final-300-job-measurement/README.md) | 300건 기본 검증과 추가 부하 측정 | [300건 기본 검증](./06-final-300-job-measurement/README.md#실제-측정-결과)과 [1,500건 추가 부하 검증](./06-final-300-job-measurement/README.md#1500건-추가-부하-측정-결과) 통과 및 결과 기록 완료 |
 
 ## Application 구조
 
@@ -161,7 +161,7 @@ curl -i -X POST http://127.0.0.1:8080/jobs \
 
 전용 MySQL 테스트 DB에서 자동 테스트를 실행했다. H2 대체나 테스트 생략은 하지 않았다. 일반·회귀 테스트의 최신 실행 결과는 [05의 검증 상태](./05-regression-verification/README.md#현재-검증-상태)를 따른다. 2026-10-18에는 별도 Web·Worker·Measurement JVM에서 [300건 기본 측정](./06-final-300-job-measurement/README.md#실제-측정-결과)을 통과하고 원본 결과를 저장했다. 실제 프로세스 재시작·복구 검증은 확인 필요다.
 
-300건 기본 검증은 완료했고, 요청 수 또는 HTTP 동시성을 늘리는 추가 부하는 미실행이다. 통과 조건과 확대 기준은 [06의 측정 범위](./06-final-300-job-measurement/README.md#측정-범위와-확대-기준)를 따른다.
+300건 기본 검증 이후 1,500건을 180초 구간에 투입하는 추가 부하 검증도 완료했다. 전체 완료 시간 20분 이내와 POST 응답 p95 500ms 이하를 모두 통과했다. 실행 조건과 상세 판정은 [06의 추가 부하 측정 결과](./06-final-300-job-measurement/README.md#1500건-추가-부하-측정-결과)를 따른다.
 
 ## 비범위
 

@@ -1,0 +1,60 @@
+{
+  "verifiedAt": "2026-10-31T15:37:59.062171+00:00",
+  "metrics": {
+    "jobCount": 1500,
+    "monsterCount": 1500,
+    "succeededCount": 1500,
+    "failedCount": 0,
+    "unfinishedCount": 0,
+    "totalAttempts": 1500,
+    "retriedJobCount": 0,
+    "missingMonsterCount": 0,
+    "orphanMonsterCount": 0,
+    "misconnectedResultCount": 0,
+    "unreleasedClaimCount": 0,
+    "succeededWithoutImageCount": 0
+  },
+  "expected": {
+    "jobCount": 1500,
+    "monsterCount": 1500,
+    "succeededCount": 1500,
+    "failedCount": 0,
+    "unfinishedCount": 0,
+    "totalAttempts": 1500,
+    "retriedJobCount": 0,
+    "missingMonsterCount": 0,
+    "orphanMonsterCount": 0,
+    "misconnectedResultCount": 0,
+    "unreleasedClaimCount": 0,
+    "succeededWithoutImageCount": 0
+  },
+  "checks": {
+    "jobCount": true,
+    "monsterCount": true,
+    "succeededCount": true,
+    "failedCount": true,
+    "unfinishedCount": true,
+    "totalAttempts": true,
+    "retriedJobCount": true,
+    "missingMonsterCount": true,
+    "orphanMonsterCount": true,
+    "misconnectedResultCount": true,
+    "unreleasedClaimCount": true,
+    "succeededWithoutImageCount": true
+  },
+  "queries": {
+    "jobCount": "SELECT COUNT(*) FROM image_generation_job;",
+    "monsterCount": "SELECT COUNT(*) FROM queue_monster;",
+    "succeededCount": "SELECT COUNT(*) FROM image_generation_job WHERE status='SUCCEEDED';",
+    "failedCount": "SELECT COUNT(*) FROM image_generation_job WHERE status='FAILED';",
+    "unfinishedCount": "SELECT COUNT(*) FROM image_generation_job WHERE status IN ('PENDING','RUNNING');",
+    "totalAttempts": "SELECT COALESCE(SUM(attempt_count),0) FROM image_generation_job;",
+    "retriedJobCount": "SELECT COUNT(*) FROM image_generation_job WHERE attempt_count>1;",
+    "missingMonsterCount": "SELECT COUNT(*) FROM image_generation_job j LEFT JOIN queue_monster m ON m.monster_id=j.monster_id WHERE m.monster_id IS NULL;",
+    "orphanMonsterCount": "SELECT COUNT(*) FROM queue_monster m LEFT JOIN image_generation_job j ON j.monster_id=m.monster_id WHERE j.job_id IS NULL;",
+    "misconnectedResultCount": "SELECT COUNT(*) FROM image_generation_job j JOIN queue_monster m ON m.monster_id=j.monster_id WHERE m.prompt<>j.prompt OR m.image IS NULL OR m.image<>CONCAT('image:',j.prompt);",
+    "unreleasedClaimCount": "SELECT COUNT(*) FROM image_generation_job WHERE claim_token IS NOT NULL OR deadline_at IS NOT NULL;",
+    "succeededWithoutImageCount": "SELECT COUNT(*) FROM image_generation_job j JOIN queue_monster m ON m.monster_id=j.monster_id WHERE j.status='SUCCEEDED' AND (m.image IS NULL OR m.image='');"
+  },
+  "allPassed": true
+}

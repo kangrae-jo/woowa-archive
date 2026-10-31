@@ -10,6 +10,7 @@ public record EnvironmentReport(
         String databaseName,
         int jobCount,
         int requestConcurrency,
+        Duration requestInterval,
         Duration timeout,
         Duration pollingInterval,
         int expectedWorkerConcurrency,
