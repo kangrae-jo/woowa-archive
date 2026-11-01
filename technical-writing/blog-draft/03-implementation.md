@@ -6,11 +6,11 @@
 
 ## 별도 JVM으로 나눈 웹 서버와 Worker
 
-웹 서버와 Worker를 각각 별도의 JVM으로 실행하도록 애플리케이션을 나눴습니다. 웹 서버는 요청 등록과 상태 조회를 맡고 Worker는 DB에서 작업을 찾아 이미지를 생성하고 결과를 기록하도록 했습니다.
+웹 서버와 Worker를 각각 별도의 JVM으로 실행하도록 애플리케이션을 나눴습니다. 웹 서버는 요청 등록과 상태 조회를 담당하고 Worker는 DB에서 작업을 찾아 이미지를 생성하고 결과를 기록하도록 했습니다.
 
-웹 서버는 `POST /jobs`로 받은 프롬프트를 `Monster`와 Job으로 저장합니다. 등록 트랜잭션이 커밋되면 `202 Accepted`와 두 식별자를 반환합니다. 이 응답은 작업 접수가 완료됐다는 의미이며 이후 상태와 생성 결과는 `GET /jobs/{jobId}`로 조회합니다.
+웹 서버는 `POST /jobs`로 받은 프롬프트를 `Monster`와 Job으로 저장합니다. 등록 트랜잭션이 커밋되면 `202 Accepted`와 두 식별자(두 식별자가 뭐지)를 반환합니다. 이 응답은 작업 접수가 완료됐다는 의미이며 이후 상태와 생성 결과는 `GET /jobs/{jobId}`로 조회합니다.
 
-Worker는 HTTP 서버를 열지 않고 MySQL에서 실행할 Job을 Polling으로 조회합니다. 이미지 생성에는 일정 시간 뒤 `image:{prompt}`를 반환하는 모의 생성기(Generator)를 사용했습니다. 생성 지연을 제어하면서 작업 처리 규칙을 살펴보기 위한 구성입니다.
+Worker는 HTTP 서버를 열지 않고 MySQL에서 실행할 Job을 Polling으로 조회합니다. 이미지 생성에는 5초 뒤 `image:{prompt}`를 반환하는 모의 생성기(Generator)를 사용했습니다. 생성 지연을 제어하면서 작업 처리 규칙을 살펴보기 위한 구성입니다.
 
 ```mermaid
 flowchart LR
@@ -38,7 +38,7 @@ flowchart LR
 
 ## 작업 행을 보존하는 네 가지 상태
 
-[최소 Worker](../02-minimal-db-polling/src/main/java/com/kng0501/dbpolling/worker/application/DbPollingWorker.java)는 조회한 요청 행을 삭제한 뒤 Generator를 호출합니다. 삭제 이후 생성 중에 예외가 발생하면 다시 처리할 요청 행을 찾을 수 없습니다.
+[최소 구조에서 Worker](../02-minimal-db-polling/src/main/java/com/kng0501/dbpolling/worker/application/DbPollingWorker.java)는 조회한 요청 행을 삭제한 뒤 Generator를 호출합니다. 삭제 이후 생성 중에 예외가 발생하면 다시 처리할 요청 행을 찾을 수 없습니다.
 
 개선 구조에서는 Job 행을 보존하고 상태로 처리 과정을 나타냈습니다. `PENDING`은 대기 중인 작업, `RUNNING`은 Worker가 선점한 작업입니다. 결과 저장에 성공하면 `SUCCEEDED`, 실패나 기한 만료 후 더 시도할 수 없으면 `FAILED`로 종결합니다.
 
@@ -77,9 +77,9 @@ update ImageGenerationJobEntity job
 
 선점할 때마다 새로운 실행 식별자인 `claimToken`과 처리 기한인 `deadlineAt`을 함께 기록합니다. 시도 횟수도 이때 증가합니다. 이후 완료와 실패 요청이 어느 실행에서 왔는지 구분하기 위한 정보입니다.
 
-조건부 UPDATE에도 InnoDB의 레코드 잠금이 사용됩니다. 선점 트랜잭션은 이미지 생성 전에 커밋하고 Generator 호출은 트랜잭션 밖에서 실행하도록 했습니다. 이미지 생성 시간 동안 선점 트랜잭션과 잠금을 유지하지 않도록 하기 위해서입니다. [MySQL의 UPDATE 잠금 설명](https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html)
+조건부 UPDATE에도 InnoDB의 레코드 잠금이 사용됩니다. 선점 트랜잭션은 이미지 생성 전에 커밋하고 Generator 호출은 트랜잭션 밖에서 실행하도록 했습니다. 이미지 생성 시간 동안 선점 트랜잭션과 잠금을 유지하지 않도록 하기 위해서입니다.
 
-JPA의 일괄 UPDATE 뒤에 이전 엔티티 상태를 재사용하지 않도록 `@Modifying`에 `flushAutomatically = true`, `clearAutomatically = true`를 설정했습니다. 선점 후에는 Job 데이터를 다시 조회해 실행에 사용할 스냅샷으로 변환합니다. [Spring Data JPA의 변경 쿼리 설명](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html#jpa.modifying-queries)
+JPA의 일괄 UPDATE 뒤에 이전 엔티티 상태를 재사용하지 않도록 `@Modifying`에 `flushAutomatically = true`, `clearAutomatically = true`를 설정했습니다. 선점 후에는 Job 데이터를 다시 조회해 실행에 사용할 스냅샷으로 변환합니다.
 
 ## 처리 기한 만료 후 복구와 재시도
 
@@ -91,7 +91,7 @@ Worker가 선점한 뒤 완료나 실패를 기록하지 못하면 Job은 `RUNNI
 
 ## claimToken으로 오래된 결과 거부
 
-기한이 만료된 Job을 다시 선점하면 새로운 `claimToken`을 발급합니다. 이때 이전 Worker의 이미지 생성이 늦게 끝나더라도 이전 token으로 현재 작업의 결과를 바꿀 수 없어야 합니다.
+기한이 만료된 Job을 다시 선점하면 새로운 `claimToken`을 발급합니다. 이때 이전 Worker의 이미지 생성이 뒤늦게 끝나더라도 이전 token으로 현재 작업의 결과를 바꿀 수 없어야 합니다.
 
 ```mermaid
 sequenceDiagram
@@ -113,14 +113,14 @@ sequenceDiagram
 
 완료 처리에서는 Job의 성공 전환과 `Monster`의 이미지 갱신을 [하나의 트랜잭션](../04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/JobQueue.java)으로 묶었습니다. 결과 대상은 Job의 `monster_id`로 찾고 이미지 갱신이 실패하면 성공 전환도 함께 롤백합니다.
 
-**오래된 결과를 거부하는 범위는 DB 결과 반영입니다.** 처리 기한이 지났다고 기존 Generator 호출이 자동으로 중단되지는 않습니다. 이전 실행과 재시도가 겹치면 이미지 생성 호출 자체는 중복될 수 있습니다.
+**오래된 결과를 거부하는 타이밍은 DB에 결과가 반영될 때 입니다.** 처리 기한이 지났다고 기존 Generator 호출이 자동으로 중단되지는 않습니다. 이전 실행과 재시도가 겹치면 이미지 생성 자체는 중복될 수 있습니다는 한계가 있습니다.
 
 ## Job 실패 처리와 주기적 조회의 예외 처리
 
-[JobWorker](../04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/JobWorker.java)는 이미지 생성이나 완료 처리에서 예외가 발생하면 해당 Job의 실패 전환을 시도합니다. 실패 기록마저 저장하지 못하면 오류를 로그에 남기고 DB에 보존된 `RUNNING` 상태와 처리 기한을 통해 만료 복구가 다시 접근하도록 했습니다.
+Worker는 이미지 생성이나 완료 처리에서 예외가 발생하면 해당 Job의 실패 전환을 시도합니다. 실패 기록마저 저장하지 못하면 오류를 로그에 남기고 DB에 보존된 `RUNNING` 상태와 처리 기한을 통해 만료 복구가 다시 접근하도록 했습니다.
 
-[JobPollingTasks](../04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/JobPollingTasks.java)에서는 작업 조회와 만료 복구를 실행하는 스케줄러 경계에서 `RuntimeException`을 기록하도록 했습니다. 한 번의 조회나 복구에서 발생한 예외를 처리하고 다음 주기에도 실행할 수 있도록 구성했습니다.
+Polling 단계에서는 작업 조회와 만료 복구를 실행하는 스케줄러 경계에서 `RuntimeException`을 기록하도록 했습니다. 한 번의 조회나 복구에서 발생한 예외를 처리하고 다음 주기에도 실행할 수 있도록 구성했습니다.
 
-이미지 생성용 실행 풀과 작업 조회 및 복구용 스케줄러도 분리했습니다. 긴 이미지 생성이 제어용 스케줄러의 스레드를 점유하지 않도록 하고 [JobScheduler](../04-reliability-hardening/src/main/java/com/kng0501/dbqueue/worker/application/JobScheduler.java)가 실행 여유를 확보한 뒤 Job을 선점하도록 했습니다.
+이미지 생성용 실행 풀과 작업 조회 및 복구용 스케줄러도 분리했습니다. 긴 이미지 생성이 제어용 스케줄러의 스레드를 점유하지 않도록 하고 JobScheduler가 실행 여유를 확보한 뒤 Job을 선점하도록 했습니다.
 
 다음 [4. 달라진 점과 근거](./04-results.md)에서는 같은 다섯 가지 조건으로 최소 구조의 실패 재현과 개선 구조의 회귀 검증 결과를 비교하겠습니다. 테스트로 확인한 범위와 실제 JVM 종료와 재시작 검증이 필요한 범위도 함께 정리하겠습니다.
