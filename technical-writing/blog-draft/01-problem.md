@@ -1,4 +1,4 @@
-# ① 이미지 생성 요청 약 300건 처리 중 장애와 신뢰성 검증 범위
+# 1 이미지 생성 요청 약 300건 처리 중 장애와 신뢰성 검증 범위
 
 이번 글에서는 HTTP 요청을 접수한 뒤에도 이미지 생성 작업을 보존하고 완료와 실패 여부를 추적하는 백엔드 처리 규칙을 검증합니다. 커켓몬을 운영하면서 겪은 장애를 계기로 웹 서버와 이미지 생성 서버가 DB를 통해 협력하는 과정을 다시 살펴봤습니다.
 
@@ -70,4 +70,4 @@ flowchart LR
 
 근거: [과거 운영 기록과 확인하지 못한 내용](../01-past-structure-and-limitations/README.md), [최소 DB Polling 구조](../02-minimal-db-polling/README.md), [다섯 가지 잠재적 실패](../03-failure-reproduction/README.md).
 
-다음: [② 비교한 방법](./02-options.md).
+다음: [2 비교한 방법](./02-options.md).
