@@ -1,0 +1,126 @@
+{
+  "startedAtKst": "2026-11-09T21:04:29.096967+09:00",
+  "finishedAtKst": "2026-11-09T21:07:57.411362+09:00",
+  "gitHead": "5b60f000473bde2511ebe296e2fe7961fc8ceb9e",
+  "environment": {
+    "java": "openjdk version \"21.0.5\" 2024-10-15 LTS",
+    "mysql": "9.2.0",
+    "isolation": "REPEATABLE-READ",
+    "os": "Darwin 24.2.0 arm64",
+    "cpu": "Apple M3"
+  },
+  "conditions": {
+    "runs": 3,
+    "jobsPerRun": 40,
+    "extraJobDuringOutage": 1,
+    "workerProcesses": 1,
+    "workerConcurrency": 8,
+    "generatorDelaySeconds": 5,
+    "processingTimeoutSeconds": 30,
+    "retryDelaySeconds": 1,
+    "maxAttempts": 3,
+    "pollingAndRecoveryIntervalMs": 100,
+    "killSignal": "SIGKILL",
+    "killTiming": "SUCCEEDED와 RUNNING이 각각 8건 이상이 된 1.0초 뒤",
+    "restartTiming": "종료 당시 RUNNING의 처리 기한이 3초 이상 지난 뒤"
+  },
+  "allPassed": true,
+  "runs": [
+    {
+      "run": 1,
+      "passed": true,
+      "checks": {
+        "worker_killed_by_sigkill": true,
+        "app_server_accepted_during_outage": true,
+        "no_db_change_after_deadline_while_worker_down": true,
+        "expired_running_visible_via_get": true,
+        "all_jobs_succeeded": true,
+        "no_job_lost": true,
+        "orphans_reclaimed_once": true,
+        "other_jobs_single_attempt": true,
+        "images_match_prompt": true,
+        "no_failed_jobs": true
+      },
+      "killedAtKst": "2026-11-09T21:04:42.683966+09:00",
+      "workerExitCode": -9,
+      "countsAtKill": {
+        "PENDING": 24,
+        "RUNNING": 8,
+        "SUCCEEDED": 8,
+        "FAILED": 0
+      },
+      "orphanRunningJobs": 8,
+      "totalJobs": 41,
+      "workerDownSeconds": 32.239,
+      "workerReadySecondsAfterRestart": 2.046,
+      "firstOrphanReclaimedSecondsAfterRestart": 2.087,
+      "lastOrphanReclaimedSecondsAfterRestart": 2.087,
+      "allJobsFinishedSecondsAfterRestart": 27.373,
+      "sampleLastError": "processing deadline expired"
+    },
+    {
+      "run": 2,
+      "passed": true,
+      "checks": {
+        "worker_killed_by_sigkill": true,
+        "app_server_accepted_during_outage": true,
+        "no_db_change_after_deadline_while_worker_down": true,
+        "expired_running_visible_via_get": true,
+        "all_jobs_succeeded": true,
+        "no_job_lost": true,
+        "orphans_reclaimed_once": true,
+        "other_jobs_single_attempt": true,
+        "images_match_prompt": true,
+        "no_failed_jobs": true
+      },
+      "killedAtKst": "2026-11-09T21:05:50.753719+09:00",
+      "workerExitCode": -9,
+      "countsAtKill": {
+        "PENDING": 24,
+        "RUNNING": 8,
+        "SUCCEEDED": 8,
+        "FAILED": 0
+      },
+      "orphanRunningJobs": 8,
+      "totalJobs": 41,
+      "workerDownSeconds": 32.026,
+      "workerReadySecondsAfterRestart": 1.841,
+      "firstOrphanReclaimedSecondsAfterRestart": 1.863,
+      "lastOrphanReclaimedSecondsAfterRestart": 1.863,
+      "allJobsFinishedSecondsAfterRestart": 27.011,
+      "sampleLastError": "processing deadline expired"
+    },
+    {
+      "run": 3,
+      "passed": true,
+      "checks": {
+        "worker_killed_by_sigkill": true,
+        "app_server_accepted_during_outage": true,
+        "no_db_change_after_deadline_while_worker_down": true,
+        "expired_running_visible_via_get": true,
+        "all_jobs_succeeded": true,
+        "no_job_lost": true,
+        "orphans_reclaimed_once": true,
+        "other_jobs_single_attempt": true,
+        "images_match_prompt": true,
+        "no_failed_jobs": true
+      },
+      "killedAtKst": "2026-11-09T21:06:58.102532+09:00",
+      "workerExitCode": -9,
+      "countsAtKill": {
+        "PENDING": 24,
+        "RUNNING": 8,
+        "SUCCEEDED": 8,
+        "FAILED": 0
+      },
+      "orphanRunningJobs": 8,
+      "totalJobs": 41,
+      "workerDownSeconds": 32.092,
+      "workerReadySecondsAfterRestart": 1.64,
+      "firstOrphanReclaimedSecondsAfterRestart": 1.788,
+      "lastOrphanReclaimedSecondsAfterRestart": 1.788,
+      "allJobsFinishedSecondsAfterRestart": 27.031,
+      "sampleLastError": "processing deadline expired"
+    }
+  ]
+}

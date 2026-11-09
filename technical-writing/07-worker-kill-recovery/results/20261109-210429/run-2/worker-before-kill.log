@@ -1,0 +1,33 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-11-09T21:05:42.760+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] c.k.d.worker.ImageWorkerApplication      : Starting ImageWorkerApplication using Java 21.0.5 with PID 49636 (/Users/kangrae/Documents/GitHub/woowa-archive/technical-writing/build/classes/java/main started by kangrae in /Users/kangrae/Documents/GitHub/woowa-archive/technical-writing/07-worker-kill-recovery)
+2026-11-09T21:05:42.761+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] c.k.d.worker.ImageWorkerApplication      : No active profile set, falling back to 1 default profile: "default"
+2026-11-09T21:05:42.936+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-09T21:05:42.959+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 20 ms. Found 1 JPA repository interface.
+2026-11-09T21:05:43.080+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-11-09T21:05:43.097+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-11-09T21:05:43.107+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-11-09T21:05:43.191+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-09T21:05:43.200+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-09T21:05:43.267+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1e226bcd
+2026-11-09T21:05:43.268+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-09T21:05:43.305+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 9.2
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-11-09T21:05:43.558+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-09T21:05:43.572+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-09T21:05:43.658+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-11-09T21:05:44.083+09:00  INFO 49636 --- [db-polling-technical-writing] [           main] c.k.d.worker.ImageWorkerApplication      : Started ImageWorkerApplication in 1.5 seconds (process running for 1.667)
